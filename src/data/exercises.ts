@@ -278,6 +278,111 @@ const equipmentExercises: Exercise[] = [
   { id: "rowing-intervals", name: "Rowing Intervals", description: "Row at maximum effort. Drive with legs first, then pull with arms. Keep strokes powerful and rhythmic.", muscleGroup: "Full Body", requiredEquipment: ["rowing-machine"], image: rowImg, duration: 40 },
   { id: "elliptical-intervals", name: "Elliptical Sprint", description: "Set resistance high and move at maximum pace. Push and pull with both arms and legs. Full body cardio.", muscleGroup: "Cardio", requiredEquipment: ["elliptical"], image: lungeImg, duration: 30 },
   { id: "stair-climber-intervals", name: "Stair Climber Sprint", description: "Climb at high intensity without holding the rails. Drive through each step. Great for glutes and quads.", muscleGroup: "Cardio", requiredEquipment: ["stair-climber"], image: lungeImg, duration: 30 },
+
+  // Power Tower exercises
+  { id: "pt-pullups", name: "Power Tower Pull-Ups", description: "Grip the pull-up handles on the power tower. Pull chin above the bar, driving elbows down. Lower with control.", muscleGroup: "Back", requiredEquipment: ["power-tower"], image: pullupImg, duration: 40 },
+  { id: "pt-dips", name: "Power Tower Dips", description: "Use the dip handles on the power tower. Lower body by bending elbows to 90°. Press back up.", muscleGroup: "Chest", requiredEquipment: ["power-tower"], image: pushupImg, duration: 40 },
+  { id: "pt-knee-raise", name: "Power Tower Knee Raise", description: "Support yourself on the arm rests. Raise knees to chest, squeezing abs. Lower slowly without swinging.", muscleGroup: "Core", requiredEquipment: ["power-tower"], image: plankImg, duration: 35 },
+  { id: "pt-leg-raise", name: "Power Tower Leg Raise", description: "Hang from the pull-up bar. Raise straight legs to parallel or higher. Lower with control—don't swing.", muscleGroup: "Core", requiredEquipment: ["power-tower"], image: plankImg, duration: 35 },
+  { id: "pt-chin-ups", name: "Power Tower Chin-Ups", description: "Grip with palms facing you on the power tower. Pull chin above bar, focusing on bicep contraction.", muscleGroup: "Arms", requiredEquipment: ["power-tower"], image: pullupImg, duration: 40 },
+  { id: "pt-pushups", name: "Power Tower Push-Ups (Handles)", description: "Use the stationary push-up handles at the base of the power tower. Deeper range of motion than floor push-ups.", muscleGroup: "Chest", requiredEquipment: ["power-tower"], image: pushupImg, duration: 40 },
+
+  // Captain's Chair
+  { id: "cc-knee-raise", name: "Captain's Chair Knee Raise", description: "Support yourself on arm pads. Bring knees up toward chest, rounding lower back slightly. Lower with control.", muscleGroup: "Core", requiredEquipment: ["captains-chair"], image: plankImg, duration: 35 },
+  { id: "cc-leg-raise", name: "Captain's Chair Leg Raise", description: "Support on arm pads. Raise straight legs to parallel. Pause and lower slowly. Don't swing.", muscleGroup: "Core", requiredEquipment: ["captains-chair"], image: plankImg, duration: 35 },
+  { id: "cc-oblique-raise", name: "Captain's Chair Oblique Raise", description: "Support on arm pads. Raise knees to one side, twisting torso. Alternate sides each rep.", muscleGroup: "Core", requiredEquipment: ["captains-chair"], image: plankImg, duration: 35 },
+
+  // Stationary Push-Up Handles
+  { id: "puh-pushup", name: "Push-Up Handle Push-Ups", description: "Place handles shoulder-width. Grip and perform push-ups with a deeper range of motion. Keep core tight.", muscleGroup: "Chest", requiredEquipment: ["push-up-handles"], image: pushupImg, duration: 40 },
+  { id: "puh-wide", name: "Wide Push-Ups (Handles)", description: "Place handles wider than shoulders. Perform push-ups emphasizing chest stretch at the bottom.", muscleGroup: "Chest", requiredEquipment: ["push-up-handles"], image: pushupImg, duration: 40 },
+  { id: "puh-close", name: "Close-Grip Push-Ups (Handles)", description: "Place handles close together under chest. Perform push-ups focusing on tricep engagement.", muscleGroup: "Arms", requiredEquipment: ["push-up-handles"], image: pushupImg, duration: 40 },
+
+  // Rotating Push-Up Handles
+  { id: "rph-pushup", name: "Rotating Push-Up", description: "Grip rotating handles and perform push-ups. The rotation engages stabilizer muscles and reduces wrist strain.", muscleGroup: "Chest", requiredEquipment: ["rotating-push-up-handles"], image: pushupImg, duration: 40 },
+  { id: "rph-wide", name: "Wide Rotating Push-Up", description: "Place rotating handles wide. Push up while allowing natural wrist rotation. Emphasizes chest.", muscleGroup: "Chest", requiredEquipment: ["rotating-push-up-handles"], image: pushupImg, duration: 40 },
+  { id: "rph-close", name: "Close Rotating Push-Up", description: "Place handles close together. Rotate inward as you push up, targeting triceps and inner chest.", muscleGroup: "Arms", requiredEquipment: ["rotating-push-up-handles"], image: pushupImg, duration: 40 },
+  { id: "rph-tblock", name: "T-Rotation Push-Up", description: "Do a push-up on rotating handles, then rotate one arm to the ceiling in a T position. Alternate sides.", muscleGroup: "Core", requiredEquipment: ["rotating-push-up-handles"], image: pushupImg, duration: 40 },
+
+  // Adjustable Dumbbells / Hand Weights
+  { id: "adj-curl", name: "Adjustable Dumbbell Curl", description: "Stand with adjustable dumbbells at sides. Curl up to shoulders, squeezing biceps at top. Lower slowly.", muscleGroup: "Arms", requiredEquipment: ["adjustable-dumbbells"], image: curlImg, duration: 40 },
+  { id: "adj-press", name: "Adjustable Dumbbell Press", description: "Sit or stand with weights at shoulders. Press overhead until arms lock out. Lower with control.", muscleGroup: "Shoulders", requiredEquipment: ["adjustable-dumbbells"], image: shoulderPressImg, duration: 40 },
+  { id: "adj-row", name: "Adjustable Dumbbell Row", description: "Hinge at hips holding adjustable dumbbells. Pull to ribcage, squeezing back. Lower with control.", muscleGroup: "Back", requiredEquipment: ["adjustable-dumbbells"], image: rowImg, duration: 40 },
+  { id: "adj-lateral", name: "Adjustable Dumbbell Lateral Raise", description: "Stand with weights at sides. Raise arms to shoulder height, keeping slight elbow bend. Lower slowly.", muscleGroup: "Shoulders", requiredEquipment: ["adjustable-dumbbells"], image: shoulderPressImg, duration: 40 },
+  { id: "adj-squat", name: "Adjustable Dumbbell Squat", description: "Hold weights at shoulders. Squat deep, then drive through heels to stand. Keep chest up.", muscleGroup: "Legs", requiredEquipment: ["adjustable-dumbbells"], image: squatImg, duration: 40 },
+  { id: "adj-lunge", name: "Adjustable Dumbbell Lunge", description: "Hold weights at sides. Step forward into lunge, both knees to 90°. Push back to start.", muscleGroup: "Legs", requiredEquipment: ["adjustable-dumbbells"], image: lungeImg, duration: 40 },
+  { id: "adj-fly", name: "Adjustable Dumbbell Fly", description: "Lie on bench with weights above chest. Open arms wide in an arc, then squeeze chest to close.", muscleGroup: "Chest", requiredEquipment: ["adjustable-dumbbells", "bench"], image: benchPressImg, duration: 40 },
+  { id: "adj-tricep", name: "Adjustable Dumbbell Tricep Extension", description: "Hold one weight overhead with both hands. Lower behind head, then extend back up.", muscleGroup: "Arms", requiredEquipment: ["adjustable-dumbbells"], image: curlImg, duration: 40 },
+
+  // Yoga Ball (Exercise Ball)
+  { id: "yb-crunch", name: "Yoga Ball Crunch", description: "Lie back on the yoga ball, feet planted. Crunch upward squeezing abs. Lower back over the ball.", muscleGroup: "Core", requiredEquipment: ["yoga-ball"], image: plankImg, duration: 40 },
+  { id: "yb-pike", name: "Yoga Ball Pike", description: "Plank with shins on the ball. Pike hips up, rolling ball toward hands. Return to plank.", muscleGroup: "Core", requiredEquipment: ["yoga-ball"], image: plankImg, duration: 35 },
+  { id: "yb-hamstring-curl", name: "Yoga Ball Hamstring Curl", description: "Lie on back, heels on ball. Lift hips and curl ball toward glutes. Extend and repeat.", muscleGroup: "Legs", requiredEquipment: ["yoga-ball"], image: squatImg, duration: 40 },
+  { id: "yb-wall-squat", name: "Yoga Ball Wall Squat", description: "Place ball between your back and the wall. Squat down, rolling the ball. Stand back up.", muscleGroup: "Legs", requiredEquipment: ["yoga-ball"], image: squatImg, duration: 40 },
+  { id: "yb-back-ext", name: "Yoga Ball Back Extension", description: "Lie face down over the ball, feet anchored. Lift chest up, squeezing lower back. Lower with control.", muscleGroup: "Back", requiredEquipment: ["yoga-ball"], image: plankImg, duration: 35 },
+  { id: "yb-plank", name: "Yoga Ball Plank", description: "Forearms on the yoga ball, body straight. Hold the plank, fighting the instability. Engage your core.", muscleGroup: "Core", requiredEquipment: ["yoga-ball"], image: plankImg, duration: 40 },
+  { id: "yb-pass", name: "Yoga Ball V-Pass", description: "Lie flat, ball in hands. Lift arms and legs, passing ball from hands to feet. Lower and repeat.", muscleGroup: "Core", requiredEquipment: ["yoga-ball"], image: plankImg, duration: 35 },
+
+  // Yoga Mat
+  { id: "ym-cobra", name: "Cobra Stretch", description: "Lie face down on mat. Press hands into floor, lifting chest while keeping hips down. Hold and breathe.", muscleGroup: "Back", requiredEquipment: ["yoga-mat"], image: plankImg, duration: 40 },
+  { id: "ym-bird-dog", name: "Bird Dog", description: "On all fours on the mat. Extend opposite arm and leg simultaneously. Hold briefly, then switch sides.", muscleGroup: "Core", requiredEquipment: ["yoga-mat"], image: plankImg, duration: 40 },
+  { id: "ym-dead-bug", name: "Dead Bug", description: "Lie on back, arms up, knees at 90°. Lower opposite arm and leg toward floor. Return and switch.", muscleGroup: "Core", requiredEquipment: ["yoga-mat"], image: plankImg, duration: 40 },
+
+  // Ankle Weights
+  { id: "aw-leg-raise", name: "Weighted Leg Raise", description: "Lie on back with ankle weights. Raise straight legs to 90°. Lower slowly without touching floor.", muscleGroup: "Core", requiredEquipment: ["ankle-weights"], image: plankImg, duration: 40 },
+  { id: "aw-donkey-kick", name: "Weighted Donkey Kick", description: "On all fours with ankle weights. Kick one leg back and up, squeezing glute at top. Switch legs.", muscleGroup: "Glutes", requiredEquipment: ["ankle-weights"], image: lungeImg, duration: 40 },
+  { id: "aw-side-leg", name: "Weighted Side Leg Raise", description: "Lie on side with ankle weights. Raise top leg up, keeping it straight. Lower slowly. Switch sides.", muscleGroup: "Glutes", requiredEquipment: ["ankle-weights"], image: lungeImg, duration: 40 },
+
+  // Wrist Weights
+  { id: "ww-shadow-box", name: "Weighted Shadow Boxing", description: "Wear wrist weights and throw punches—jabs, crosses, hooks, uppercuts. Keep core engaged, stay light on feet.", muscleGroup: "Cardio", requiredEquipment: ["wrist-weights"], image: pushupImg, duration: 40 },
+  { id: "ww-arm-circles", name: "Weighted Arm Circles", description: "With wrist weights, extend arms and make circles. Alternate small/large, forward/backward.", muscleGroup: "Shoulders", requiredEquipment: ["wrist-weights"], image: shoulderPressImg, duration: 40 },
+
+  // Pull-Up Assist Band
+  { id: "pab-pullup", name: "Band-Assisted Pull-Up", description: "Loop band over bar, place knee or foot in band. Perform pull-ups with band supporting some of your weight.", muscleGroup: "Back", requiredEquipment: ["pull-up-assist-band", "pull-up-bar"], image: pullupImg, duration: 40 },
+  { id: "pab-chinup", name: "Band-Assisted Chin-Up", description: "Loop band over bar, underhand grip. Pull chin above bar with band assist. Great for building strength.", muscleGroup: "Arms", requiredEquipment: ["pull-up-assist-band", "pull-up-bar"], image: pullupImg, duration: 40 },
+
+  // Door Anchor + Bands
+  { id: "da-face-pull", name: "Band Face Pull (Door)", description: "Anchor band at face height. Pull toward face, separating hands and squeezing rear delts.", muscleGroup: "Shoulders", requiredEquipment: ["door-anchor", "resistance-bands"], image: rowImg, duration: 40 },
+  { id: "da-chest-press", name: "Band Chest Press (Door)", description: "Anchor band behind you at chest height. Press handles forward, squeezing chest. Return slowly.", muscleGroup: "Chest", requiredEquipment: ["door-anchor", "resistance-bands"], image: benchPressImg, duration: 40 },
+  { id: "da-lat-pull", name: "Band Lat Pulldown (Door)", description: "Anchor band high. Kneel and pull handles down to shoulders, squeezing lats. Release slowly.", muscleGroup: "Back", requiredEquipment: ["door-anchor", "resistance-bands"], image: pullupImg, duration: 40 },
+
+  // Landmine
+  { id: "lm-press", name: "Landmine Press", description: "Hold end of barbell at shoulder. Press up and forward at an angle. Great for shoulder-friendly pressing.", muscleGroup: "Shoulders", requiredEquipment: ["landmine-attachment", "barbell"], image: shoulderPressImg, duration: 40 },
+  { id: "lm-row", name: "Landmine Row", description: "Straddle the barbell, hinge forward. Row the end of the bar to your chest. Lower with control.", muscleGroup: "Back", requiredEquipment: ["landmine-attachment", "barbell"], image: rowImg, duration: 40 },
+  { id: "lm-squat", name: "Landmine Squat", description: "Hold barbell end at chest. Squat deep, then drive up. The angle makes it more quad-dominant.", muscleGroup: "Legs", requiredEquipment: ["landmine-attachment", "barbell"], image: squatImg, duration: 40 },
+  { id: "lm-rotation", name: "Landmine Rotation", description: "Hold barbell end with both hands. Rotate side to side in an arc, engaging obliques. Control the movement.", muscleGroup: "Core", requiredEquipment: ["landmine-attachment", "barbell"], image: kettlebellSwingImg, duration: 40 },
+
+  // Hex / Trap Bar
+  { id: "htb-deadlift", name: "Trap Bar Deadlift", description: "Stand inside the hex bar. Grip handles, push through floor to stand tall. Lower with control.", muscleGroup: "Back", requiredEquipment: ["hex-trap-bar"], image: deadliftImg, duration: 45 },
+  { id: "htb-shrug", name: "Trap Bar Shrugs", description: "Stand inside hex bar, hold handles. Shrug shoulders up toward ears. Squeeze traps at top. Lower.", muscleGroup: "Shoulders", requiredEquipment: ["hex-trap-bar"], image: deadliftImg, duration: 40 },
+  { id: "htb-carry", name: "Trap Bar Farmer's Carry", description: "Stand in hex bar, lift it. Walk forward with controlled steps, keeping core braced and shoulders back.", muscleGroup: "Full Body", requiredEquipment: ["hex-trap-bar"], image: deadliftImg, duration: 40 },
+
+  // Dip Belt
+  { id: "db-weighted-dip", name: "Weighted Dips", description: "Attach weight to dip belt. Perform dips on parallel bars with added resistance. Lower and press up.", muscleGroup: "Chest", requiredEquipment: ["dip-belt", "dip-station"], image: pushupImg, duration: 40 },
+  { id: "db-weighted-pullup", name: "Weighted Pull-Ups", description: "Attach weight to dip belt. Perform pull-ups with added resistance for advanced strength building.", muscleGroup: "Back", requiredEquipment: ["dip-belt", "pull-up-bar"], image: pullupImg, duration: 40 },
+
+  // Sandbag
+  { id: "sb-clean", name: "Sandbag Clean", description: "Grip sandbag handles from the floor. Explosively pull to shoulder height, catching in front rack. Lower.", muscleGroup: "Full Body", requiredEquipment: ["sandbag"], image: deadliftImg, duration: 35 },
+  { id: "sb-carry", name: "Sandbag Bear Hug Carry", description: "Hug the sandbag to your chest. Walk forward with short, controlled steps. Engages entire body.", muscleGroup: "Full Body", requiredEquipment: ["sandbag"], image: deadliftImg, duration: 40 },
+  { id: "sb-squat", name: "Sandbag Front Squat", description: "Hold sandbag at chest. Squat deep, keeping chest up. Drive through heels to stand.", muscleGroup: "Legs", requiredEquipment: ["sandbag"], image: squatImg, duration: 40 },
+
+  // Sledgehammer & Tire
+  { id: "st-slam", name: "Tire Sledgehammer Slam", description: "Swing sledgehammer overhead and slam onto tire. Alternate lead hand each rep. Full body explosive power.", muscleGroup: "Full Body", requiredEquipment: ["sledgehammer-tire"], image: kettlebellSwingImg, duration: 30 },
+  { id: "st-flip", name: "Tire Flip", description: "Squat low, grip tire bottom. Drive through legs and flip it over. Walk to other side and repeat.", muscleGroup: "Full Body", requiredEquipment: ["sledgehammer-tire"], image: deadliftImg, duration: 35 },
+
+  // Agility Ladder
+  { id: "al-run", name: "Agility Ladder Sprint", description: "Run through the ladder placing one foot in each rung as fast as possible. Stay on balls of feet.", muscleGroup: "Cardio", requiredEquipment: ["agility-ladder"], image: lungeImg, duration: 30 },
+  { id: "al-lateral", name: "Agility Ladder Lateral Shuffle", description: "Side-step through the ladder, two feet in each rung. Stay low in an athletic stance.", muscleGroup: "Cardio", requiredEquipment: ["agility-ladder"], image: lungeImg, duration: 30 },
+  { id: "al-icky", name: "Agility Ladder Icky Shuffle", description: "In-in-out pattern through the ladder. Quick feet, staying light and balanced. Great for coordination.", muscleGroup: "Cardio", requiredEquipment: ["agility-ladder"], image: lungeImg, duration: 30 },
+
+  // BOSU Ball
+  { id: "bosu-squat", name: "BOSU Ball Squat", description: "Stand on flat side of BOSU. Perform squats while balancing. Engages stabilizers throughout.", muscleGroup: "Legs", requiredEquipment: ["bosu-ball"], image: squatImg, duration: 40 },
+  { id: "bosu-pushup", name: "BOSU Ball Push-Up", description: "Place hands on sides of BOSU (dome down). Perform push-ups on the unstable surface.", muscleGroup: "Chest", requiredEquipment: ["bosu-ball"], image: pushupImg, duration: 40 },
+  { id: "bosu-plank", name: "BOSU Ball Plank", description: "Forearms on BOSU dome. Hold plank position, fighting the instability. Great core challenge.", muscleGroup: "Core", requiredEquipment: ["bosu-ball"], image: plankImg, duration: 40 },
+  { id: "bosu-lunge", name: "BOSU Ball Lunge", description: "Place front foot on BOSU dome. Perform lunges, balancing on the unstable surface. Switch legs.", muscleGroup: "Legs", requiredEquipment: ["bosu-ball"], image: lungeImg, duration: 40 },
+
+  // Air Bike
+  { id: "airbike-sprint", name: "Air Bike Sprint", description: "Pedal and push/pull handles as hard as possible. The harder you go, the more resistance. Full body cardio.", muscleGroup: "Cardio", requiredEquipment: ["air-bike"], image: lungeImg, duration: 30 },
+  { id: "airbike-intervals", name: "Air Bike Intervals", description: "Alternate 10 seconds all-out effort with 10 seconds easy. The fan provides unlimited resistance.", muscleGroup: "Cardio", requiredEquipment: ["air-bike"], image: lungeImg, duration: 40 },
 ];
 
 export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExercises];
