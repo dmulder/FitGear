@@ -62,6 +62,53 @@ interface WorkoutTimerProps {
 type Phase = "exercise" | "rest" | "complete";
 type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
 
+function pickPreferredVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (voices.length === 0) return null;
+
+  const preferredNamePatterns: Array<[string, number]> = [
+    ["neural", 120],
+    ["natural", 100],
+    ["enhanced", 90],
+    ["premium", 80],
+    ["google", 70],
+    ["microsoft", 65],
+    ["samantha", 60],
+    ["victoria", 55],
+    ["daniel", 55],
+    ["karen", 55],
+    ["alex", 50],
+  ];
+
+  const avoidNamePatterns: Array<[string, number]> = [
+    ["espeak", -200],
+    ["festival", -200],
+    ["compact", -80],
+    ["robot", -80],
+  ];
+
+  const scoreVoice = (voice: SpeechSynthesisVoice): number => {
+    const name = voice.name.toLowerCase();
+    const lang = voice.lang.toLowerCase();
+    let score = 0;
+
+    if (voice.default) score += 20;
+    if (lang.startsWith("en")) score += 40;
+    if (lang.startsWith("en-us")) score += 25;
+
+    for (const [pattern, points] of preferredNamePatterns) {
+      if (name.includes(pattern)) score += points;
+    }
+
+    for (const [pattern, points] of avoidNamePatterns) {
+      if (name.includes(pattern)) score += points;
+    }
+
+    return score;
+  };
+
+  return [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] ?? null;
+}
+
 export function WorkoutTimer({
   exercises,
   restDuration,
@@ -79,6 +126,7 @@ export function WorkoutTimer({
   const [hasSavedCompletedWorkout, setHasSavedCompletedWorkout] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const speechVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAnnouncedFirstExerciseRef = useRef(false);
   const lastRestAnnouncementIndexRef = useRef(-1);
@@ -110,13 +158,30 @@ export function WorkoutTimer({
       speechTimeoutRef.current = setTimeout(() => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1;
+        utterance.voice = speechVoiceRef.current;
+        utterance.rate = 0.92;
         utterance.pitch = 1;
+        utterance.volume = 1;
         window.speechSynthesis.speak(utterance);
       }, delayMs);
     },
     [cancelScheduledSpeech]
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const assignVoice = () => {
+      speechVoiceRef.current = pickPreferredVoice(window.speechSynthesis.getVoices());
+    };
+
+    assignVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", assignVoice);
+
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", assignVoice);
+    };
+  }, []);
 
   const getAudioContext = useCallback(() => {
     if (typeof window === "undefined") return null;
