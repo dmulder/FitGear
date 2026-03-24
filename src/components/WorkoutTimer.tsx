@@ -1,7 +1,36 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Exercise } from "@/data/exercises";
+
+function useImageCycler(images: string[], intervalMs: number = 1000) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (images.length <= 1) return;
+    setIndex(0);
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [images, intervalMs]);
+  return images[index] || images[0];
+}
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, RotateCcw, ChevronLeft } from "lucide-react";
+
+function ExerciseImage({ exercise }: { exercise: Exercise }) {
+  const currentSrc = useImageCycler(exercise.images);
+  return (
+    <div className="w-full max-w-xs mb-4">
+      <img
+        src={currentSrc}
+        alt={exercise.name}
+        className="w-full h-40 object-contain rounded-lg bg-card"
+      />
+      <p className="text-sm text-muted-foreground text-center mt-3 leading-relaxed px-2">
+        {exercise.description}
+      </p>
+    </div>
+  );
+}
 
 interface WorkoutTimerProps {
   exercises: Exercise[];
@@ -169,24 +198,14 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
 
         {/* Exercise Image (during exercise phase) */}
         {phase === "exercise" && (
-          <div className="w-full max-w-xs mb-4">
-            <img
-              src={currentExercise.image}
-              alt={currentExercise.name}
-              className="w-full h-40 object-contain rounded-lg bg-card"
-              loading="lazy"
-            />
-            <p className="text-sm text-muted-foreground text-center mt-3 leading-relaxed px-2">
-              {currentExercise.description}
-            </p>
-          </div>
+          <ExerciseImage exercise={currentExercise} />
         )}
 
         {/* Next exercise preview during rest */}
         {phase === "rest" && exercises[currentIndex + 1] && (
           <div className="w-full max-w-xs">
             <img
-              src={exercises[currentIndex + 1].image}
+              src={exercises[currentIndex + 1].images[0]}
               alt={exercises[currentIndex + 1].name}
               className="w-full h-40 object-contain rounded-lg bg-card opacity-60"
               loading="lazy"
