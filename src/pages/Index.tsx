@@ -1,33 +1,47 @@
 import { useState, useCallback, useEffect } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
-import { buildWorkout, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
-import { loadSelectedEquipment, saveSelectedEquipment } from "@/lib/equipment-settings-db";
+import { buildWorkout, type Difficulty, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
+import {
+  loadSelectedEquipment,
+  loadWorkoutDifficulty,
+  saveSelectedEquipment,
+  saveWorkoutDifficulty,
+} from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Dumbbell, Zap, RefreshCw, Play } from "lucide-react";
 
 type Screen = "equipment" | "config" | "workout";
+const difficultySteps: Difficulty[] = ["easy", "medium", "hard"];
+
+const difficultyLabels: Record<Difficulty, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+};
 
 const Index = () => {
   const [screen, setScreen] = useState<Screen>("equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentId[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
-  const [equipmentLoaded, setEquipmentLoaded] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    loadSelectedEquipment()
-      .then((savedEquipment) => {
+    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty()])
+      .then(([savedEquipment, savedDifficulty]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
+        setDifficulty(savedDifficulty);
       })
       .finally(() => {
         if (isMounted) {
-          setEquipmentLoaded(true);
+          setSettingsLoaded(true);
         }
       });
 
@@ -37,9 +51,14 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    if (!equipmentLoaded) return;
+    if (!settingsLoaded) return;
     void saveSelectedEquipment(selectedEquipment);
-  }, [selectedEquipment, equipmentLoaded]);
+  }, [selectedEquipment, settingsLoaded]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    void saveWorkoutDifficulty(difficulty);
+  }, [difficulty, settingsLoaded]);
 
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
@@ -47,16 +66,23 @@ const Index = () => {
     );
   }, []);
 
-  const availableCount = getAvailableExercises(selectedEquipment).length;
+  const availableCount = getAvailableExercises(selectedEquipment, difficulty).length;
+  const maxExercises = Math.max(4, Math.min(12, availableCount));
+
+  useEffect(() => {
+    setExerciseCount((prev) => Math.min(prev, maxExercises));
+  }, [maxExercises]);
+
+  const difficultyIndex = difficultySteps.indexOf(difficulty);
 
   const generateWorkout = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount);
+    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
     setExercises(workout);
     setScreen("workout");
   };
 
   const regenerate = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount);
+    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
     setExercises(workout);
   };
 
@@ -92,13 +118,30 @@ const Index = () => {
           <div className="space-y-6 mb-8">
             <div>
               <label className="text-sm font-medium mb-2 block">
+                Difficulty: {difficultyLabels[difficulty]}
+              </label>
+              <Slider
+                value={[difficultyIndex]}
+                onValueChange={([v]) => setDifficulty(difficultySteps[v] ?? "medium")}
+                min={0}
+                max={2}
+                step={1}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-2 px-0.5">
+                <span>Easy</span>
+                <span>Medium</span>
+                <span>Hard</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
                 Exercises: {exerciseCount}
               </label>
               <Slider
                 value={[exerciseCount]}
                 onValueChange={([v]) => setExerciseCount(v)}
                 min={4}
-                max={Math.min(12, availableCount)}
+                max={maxExercises}
                 step={1}
               />
             </div>
@@ -141,7 +184,9 @@ const Index = () => {
                     <img src={ex.images[0]} alt={ex.name} className="w-10 h-10 rounded object-cover" loading="lazy" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{ex.name}</p>
-                      <p className="text-xs text-muted-foreground">{ex.muscleGroup} · {ex.duration}s</p>
+                      <p className="text-xs text-muted-foreground">
+                        {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {ex.duration}s
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -178,7 +223,7 @@ const Index = () => {
         <div className="sticky bottom-0 py-4 bg-background/90 backdrop-blur-sm mt-6 border-t">
           <Button
             onClick={() => {
-              const workout = buildWorkout(selectedEquipment, exerciseCount);
+              const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
               setExercises(workout);
               setScreen("config");
             }}

@@ -152,10 +152,15 @@ export interface Exercise {
   requiredEquipment: EquipmentId[];
   images: string[];
   duration: number; // seconds
+  difficulty: Difficulty;
 }
 
+export type Difficulty = "easy" | "medium" | "hard";
+
+type ExerciseTemplate = Omit<Exercise, "difficulty">;
+
 // Bodyweight exercises (no equipment needed)
-const bodyweightExercises: Exercise[] = [
+const bodyweightExercises: ExerciseTemplate[] = [
   { id: "pushups", name: "Push-Ups", description: "Start in a high plank. Lower your chest to the floor, then push back up. Keep your core tight and body straight.", muscleGroup: "Chest", requiredEquipment: [], images: exImg("Pushups"), duration: 40 },
   { id: "squats", name: "Bodyweight Squats", description: "Stand with feet shoulder-width apart. Bend knees and lower hips as if sitting in a chair. Drive through heels to stand.", muscleGroup: "Legs", requiredEquipment: [], images: exImg("Bodyweight_Squat"), duration: 40 },
   { id: "lunges", name: "Walking Lunges", description: "Step forward with one leg, lowering your hips until both knees are bent at 90°. Push off your front foot and step the back leg forward.", muscleGroup: "Legs", requiredEquipment: [], images: exImg("Bodyweight_Walking_Lunge"), duration: 40 },
@@ -168,7 +173,7 @@ const bodyweightExercises: Exercise[] = [
   { id: "tricep-dips-floor", name: "Floor Tricep Dips", description: "Sit on the floor with hands behind you, fingers forward. Lift hips and bend elbows to lower, then press back up.", muscleGroup: "Arms", requiredEquipment: [], images: exImg("Bench_Dips"), duration: 40 },
 ];
 
-const equipmentExercises: Exercise[] = [
+const equipmentExercises: ExerciseTemplate[] = [
   // Dumbbell exercises
   { id: "db-bicep-curl", name: "Dumbbell Bicep Curls", description: "Stand with dumbbells at your sides, palms forward. Curl the weights up to shoulder height, squeezing biceps. Lower slowly.", muscleGroup: "Arms", requiredEquipment: ["dumbbells"], images: exImg("Dumbbell_Bicep_Curl"), duration: 40 },
   { id: "db-shoulder-press", name: "Dumbbell Shoulder Press", description: "Sit or stand with dumbbells at shoulder height. Press weights overhead until arms are straight. Lower back to shoulders.", muscleGroup: "Shoulders", requiredEquipment: ["dumbbells"], images: exImg("Dumbbell_Shoulder_Press"), duration: 40 },
@@ -388,17 +393,159 @@ const equipmentExercises: Exercise[] = [
   { id: "airbike-intervals", name: "Air Bike Intervals", description: "Alternate 10 seconds all-out effort with 10 seconds easy. The fan provides unlimited resistance.", muscleGroup: "Cardio", requiredEquipment: ["air-bike"], images: exImg("Air_Bike"), duration: 40 },
 ];
 
-export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExercises];
+const EASY_EXERCISE_IDS = new Set<string>([
+  "squats",
+  "lunges",
+  "plank",
+  "glute-bridge",
+  "superman",
+  "tricep-dips-floor",
+  "db-bicep-curl",
+  "db-shoulder-press",
+  "db-goblet-squat",
+  "db-lunges",
+  "db-bent-row",
+  "db-lateral-raise",
+  "db-hammer-curl",
+  "ez-curl",
+  "cable-fly",
+  "cable-row",
+  "cable-tricep",
+  "cable-bicep",
+  "leg-press-ex",
+  "lat-pulldown-ex",
+  "chest-press-ex",
+  "leg-ext-ex",
+  "leg-curl-ex",
+  "pec-deck-ex",
+  "machine-shoulder",
+  "smith-squat",
+  "band-pull-apart",
+  "band-squat",
+  "band-curl",
+  "trx-row",
+  "trx-squat",
+  "stability-crunch",
+  "stability-hamstring",
+  "step-ups",
+  "bench-dips",
+  "incline-pushup",
+  "box-step-ups",
+  "ym-cobra",
+  "ym-bird-dog",
+  "ym-dead-bug",
+  "aw-donkey-kick",
+  "aw-side-leg",
+  "ww-arm-circles",
+  "da-face-pull",
+  "da-chest-press",
+  "da-lat-pull",
+  "adj-curl",
+  "adj-press",
+  "adj-row",
+  "adj-lateral",
+  "adj-squat",
+  "adj-lunge",
+  "adj-fly",
+  "adj-tricep",
+  "yb-crunch",
+  "yb-hamstring-curl",
+  "yb-wall-squat",
+  "yb-back-ext",
+  "yb-plank",
+]);
 
-export function getAvailableExercises(selectedEquipment: EquipmentId[]): Exercise[] {
+const HARD_EXERCISE_IDS = new Set<string>([
+  "burpees",
+  "db-renegade-row",
+  "bb-squat",
+  "bb-deadlift",
+  "bb-bench-press",
+  "bb-overhead-press",
+  "bb-bent-row",
+  "kb-swing",
+  "kb-turkish-getup",
+  "kb-clean-press",
+  "pullups",
+  "chin-ups",
+  "hanging-leg-raise",
+  "dips",
+  "ring-pushups",
+  "ring-dips",
+  "trx-pushup",
+  "trx-pike",
+  "ab-rollout",
+  "med-ball-slam",
+  "box-jumps",
+  "battle-waves",
+  "battle-slams",
+  "parallette-l-sit",
+  "jump-rope-double",
+  "treadmill-sprint",
+  "bike-intervals",
+  "rowing-intervals",
+  "elliptical-intervals",
+  "stair-climber-intervals",
+  "pt-pullups",
+  "pt-dips",
+  "pt-knee-raise",
+  "pt-leg-raise",
+  "pt-chin-ups",
+  "cc-knee-raise",
+  "cc-leg-raise",
+  "cc-oblique-raise",
+  "rph-tblock",
+  "lm-rotation",
+  "htb-deadlift",
+  "htb-carry",
+  "db-weighted-dip",
+  "db-weighted-pullup",
+  "sb-clean",
+  "sb-carry",
+  "st-slam",
+  "st-flip",
+  "bosu-pushup",
+  "bosu-plank",
+  "bosu-lunge",
+  "airbike-sprint",
+  "airbike-intervals",
+]);
+
+const DIFFICULTY_ORDER: Record<Difficulty, number> = {
+  easy: 0,
+  medium: 1,
+  hard: 2,
+};
+
+function classifyDifficulty(exerciseId: string): Difficulty {
+  if (HARD_EXERCISE_IDS.has(exerciseId)) return "hard";
+  if (EASY_EXERCISE_IDS.has(exerciseId)) return "easy";
+  return "medium";
+}
+
+function canUseExerciseForDifficulty(exerciseDifficulty: Difficulty, selectedDifficulty: Difficulty): boolean {
+  return DIFFICULTY_ORDER[exerciseDifficulty] <= DIFFICULTY_ORDER[selectedDifficulty];
+}
+
+export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExercises].map((exercise) => ({
+  ...exercise,
+  difficulty: classifyDifficulty(exercise.id),
+}));
+
+export function getAvailableExercises(selectedEquipment: EquipmentId[], difficulty: Difficulty = "hard"): Exercise[] {
   return allExercises.filter((exercise) => {
+    if (!canUseExerciseForDifficulty(exercise.difficulty, difficulty)) return false;
     if (exercise.requiredEquipment.length === 0) return true;
     return exercise.requiredEquipment.every((eq) => selectedEquipment.includes(eq));
   });
 }
 
-export function buildWorkout(selectedEquipment: EquipmentId[], exerciseCount: number = 8): Exercise[] {
-  const available = getAvailableExercises(selectedEquipment);
+export function buildWorkout(
+  selectedEquipment: EquipmentId[],
+  exerciseCount: number = 8,
+  difficulty: Difficulty = "hard"
+): Exercise[] {
+  const available = getAvailableExercises(selectedEquipment, difficulty);
 
   // Try to get variety across muscle groups
   const muscleGroups = [...new Set(available.map((e) => e.muscleGroup))];
