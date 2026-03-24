@@ -286,7 +286,7 @@ export function WorkoutTimer({
     lastExerciseInstructionIndexRef.current = currentIndex;
 
     const intro = currentIndex === 0 ? "First up" : "Now";
-    speak(`${intro}, ${currentExercise.name}. ${currentExercise.description}`, 200);
+    speak(`${intro}, ${currentExercise.name}. ${currentExercise.description}`, 1000);
   }, [phase, currentIndex, currentExercise, speak]);
 
   useEffect(() => {
