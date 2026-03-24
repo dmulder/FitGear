@@ -4,6 +4,7 @@ import { Dumbbell, Cog, User, Wrench, Armchair, Heart } from "lucide-react";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   "Free Weights": <Dumbbell className="h-4 w-4" />,
+  "Machines & Cables": <Cog className="h-4 w-4" />,
   "Machines": <Cog className="h-4 w-4" />,
   "Bodyweight Stations": <User className="h-4 w-4" />,
   "Accessories": <Wrench className="h-4 w-4" />,
