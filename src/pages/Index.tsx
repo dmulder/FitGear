@@ -1,14 +1,25 @@
 import { useState, useCallback, useEffect } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
-import { buildWorkout, type Difficulty, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
+import {
+  buildWorkout,
+  getExercisesByIds,
+  type Difficulty,
+  type EquipmentId,
+  type Exercise,
+  getAvailableExercises,
+} from "@/data/exercises";
 import {
   loadSelectedEquipment,
+  loadSavedWorkouts,
   loadWorkoutDifficulty,
+  saveSavedWorkouts,
   saveSelectedEquipment,
+  type SavedWorkout,
   saveWorkoutDifficulty,
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dumbbell, RefreshCw, Play } from "lucide-react";
 
@@ -21,6 +32,14 @@ const difficultyLabels: Record<Difficulty, string> = {
   hard: "Hard",
 };
 
+function makeDefaultWorkoutName(difficulty: Difficulty, exerciseCount: number): string {
+  const dateLabel = new Date().toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  return `${difficultyLabels[difficulty]} ${exerciseCount}-Move Workout (${dateLabel})`;
+}
+
 const Index = () => {
   const [screen, setScreen] = useState<Screen>("equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentId[]>([]);
@@ -28,16 +47,19 @@ const Index = () => {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
+  const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
+  const [workoutName, setWorkoutName] = useState("");
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty()])
-      .then(([savedEquipment, savedDifficulty]) => {
+    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty(), loadSavedWorkouts()])
+      .then(([savedEquipment, savedDifficulty, localSavedWorkouts]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
         setDifficulty(savedDifficulty);
+        setSavedWorkouts(localSavedWorkouts);
       })
       .finally(() => {
         if (isMounted) {
@@ -78,6 +100,36 @@ const Index = () => {
   const regenerate = () => {
     const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
     setExercises(workout);
+  };
+
+  const saveCurrentWorkout = () => {
+    if (exercises.length === 0) return;
+
+    const trimmedName = workoutName.trim();
+    const name = trimmedName || makeDefaultWorkoutName(difficulty, exercises.length);
+    const workout: SavedWorkout = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name,
+      createdAt: new Date().toISOString(),
+      difficulty,
+      exerciseCount: exercises.length,
+      restSeconds,
+      selectedEquipment,
+      exerciseIds: exercises.map((exercise) => exercise.id),
+    };
+
+    const nextSavedWorkouts = [workout, ...savedWorkouts];
+    setSavedWorkouts(nextSavedWorkouts);
+    void saveSavedWorkouts(nextSavedWorkouts);
+    setWorkoutName("");
+  };
+
+  const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
+    setSelectedEquipment(savedWorkout.selectedEquipment);
+    setDifficulty(savedWorkout.difficulty);
+    setExerciseCount(savedWorkout.exerciseCount);
+    setRestSeconds(savedWorkout.restSeconds);
+    setExercises(getExercisesByIds(savedWorkout.exerciseIds));
   };
 
   useEffect(() => {
@@ -156,6 +208,44 @@ const Index = () => {
                 step={5}
               />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium block">Save this workout</label>
+              <div className="flex gap-2">
+                <Input
+                  value={workoutName}
+                  onChange={(e) => setWorkoutName(e.target.value)}
+                  placeholder={makeDefaultWorkoutName(difficulty, exercises.length || exerciseCount)}
+                  maxLength={80}
+                />
+                <Button variant="secondary" onClick={saveCurrentWorkout} disabled={exercises.length === 0}>
+                  Save
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Leave blank to use a default name based on difficulty and date.
+              </p>
+            </div>
+
+            {savedWorkouts.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium block">Saved workouts</label>
+                <div className="space-y-2 max-h-56 overflow-auto pr-1">
+                  {savedWorkouts.map((savedWorkout) => (
+                    <button
+                      key={savedWorkout.id}
+                      onClick={() => loadSavedWorkout(savedWorkout)}
+                      className="w-full text-left p-3 rounded-lg border bg-card hover:border-primary/30 transition-colors"
+                    >
+                      <p className="text-sm font-medium truncate">{savedWorkout.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {difficultyLabels[savedWorkout.difficulty]} · {savedWorkout.exerciseCount} exercises · {savedWorkout.restSeconds}s rest
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Preview */}

@@ -532,6 +532,13 @@ export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExe
   difficulty: classifyDifficulty(exercise.id),
 }));
 
+export function getExercisesByIds(exerciseIds: string[]): Exercise[] {
+  const byId = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
+  return exerciseIds
+    .map((id) => byId.get(id))
+    .filter((exercise): exercise is Exercise => Boolean(exercise));
+}
+
 export function getAvailableExercises(selectedEquipment: EquipmentId[], difficulty: Difficulty = "hard"): Exercise[] {
   return allExercises.filter((exercise) => {
     if (!canUseExerciseForDifficulty(exercise.difficulty, difficulty)) return false;

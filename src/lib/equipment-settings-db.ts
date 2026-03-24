@@ -5,12 +5,25 @@ const DB_VERSION = 1;
 const STORE_NAME = "settings";
 const EQUIPMENT_SETTINGS_KEY = "selected-equipment";
 const DIFFICULTY_SETTINGS_KEY = "workout-difficulty";
+const SAVED_WORKOUTS_SETTINGS_KEY = "saved-workouts";
 const LOCAL_STORAGE_EQUIPMENT_KEY = "fitgear:selected-equipment";
 const LOCAL_STORAGE_DIFFICULTY_KEY = "fitgear:workout-difficulty";
+const LOCAL_STORAGE_SAVED_WORKOUTS_KEY = "fitgear:saved-workouts";
 
 interface SettingsRecord<T> {
   key: string;
   value: T;
+}
+
+export interface SavedWorkout {
+  id: string;
+  name: string;
+  createdAt: string;
+  difficulty: Difficulty;
+  exerciseCount: number;
+  restSeconds: number;
+  selectedEquipment: EquipmentId[];
+  exerciseIds: string[];
 }
 
 function parseEquipmentList(value: unknown): EquipmentId[] {
@@ -23,6 +36,41 @@ function parseDifficulty(value: unknown): Difficulty {
     return value;
   }
   return "medium";
+}
+
+function parseSavedWorkout(value: unknown): SavedWorkout | null {
+  if (!value || typeof value !== "object") return null;
+
+  const candidate = value as Partial<SavedWorkout>;
+  if (typeof candidate.id !== "string") return null;
+  if (typeof candidate.name !== "string") return null;
+  if (typeof candidate.createdAt !== "string") return null;
+  if (typeof candidate.exerciseCount !== "number") return null;
+  if (typeof candidate.restSeconds !== "number") return null;
+  if (!Array.isArray(candidate.exerciseIds)) return null;
+
+  const difficulty = parseDifficulty(candidate.difficulty);
+  const selectedEquipment = parseEquipmentList(candidate.selectedEquipment);
+  const exerciseIds = candidate.exerciseIds.filter((id): id is string => typeof id === "string");
+
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    createdAt: candidate.createdAt,
+    difficulty,
+    exerciseCount: candidate.exerciseCount,
+    restSeconds: candidate.restSeconds,
+    selectedEquipment,
+    exerciseIds,
+  };
+}
+
+function parseSavedWorkouts(value: unknown): SavedWorkout[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map(parseSavedWorkout)
+    .filter((workout): workout is SavedWorkout => Boolean(workout));
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -172,4 +220,42 @@ export async function saveWorkoutDifficulty(difficulty: Difficulty): Promise<voi
   }
 
   window.localStorage.setItem(LOCAL_STORAGE_DIFFICULTY_KEY, difficulty);
+}
+
+export async function loadSavedWorkouts(): Promise<SavedWorkout[]> {
+  if (typeof window === "undefined") return [];
+
+  if ("indexedDB" in window) {
+    try {
+      const raw = await readSettingFromIndexedDb(SAVED_WORKOUTS_SETTINGS_KEY);
+      return parseSavedWorkouts(raw);
+    } catch {
+      // Fall back to localStorage if IndexedDB is unavailable.
+    }
+  }
+
+  const raw = window.localStorage.getItem(LOCAL_STORAGE_SAVED_WORKOUTS_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parseSavedWorkouts(parsed);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveSavedWorkouts(workouts: SavedWorkout[]): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  if ("indexedDB" in window) {
+    try {
+      await writeSettingToIndexedDb(SAVED_WORKOUTS_SETTINGS_KEY, workouts);
+      return;
+    } catch {
+      // Fall back to localStorage if IndexedDB fails.
+    }
+  }
+
+  window.localStorage.setItem(LOCAL_STORAGE_SAVED_WORKOUTS_KEY, JSON.stringify(workouts));
 }
