@@ -16,6 +16,22 @@ function useImageCycler(images: string[], intervalMs: number = 1000) {
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, RotateCcw, ChevronLeft } from "lucide-react";
 
+function ExerciseImage({ exercise }: { exercise: Exercise }) {
+  const currentSrc = useImageCycler(exercise.images);
+  return (
+    <div className="w-full max-w-xs mb-4">
+      <img
+        src={currentSrc}
+        alt={exercise.name}
+        className="w-full h-40 object-contain rounded-lg bg-card"
+      />
+      <p className="text-sm text-muted-foreground text-center mt-3 leading-relaxed px-2">
+        {exercise.description}
+      </p>
+    </div>
+  );
+}
+
 interface WorkoutTimerProps {
   exercises: Exercise[];
   restDuration: number;
