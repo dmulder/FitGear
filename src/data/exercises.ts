@@ -1,8 +1,17 @@
 // Image base URL for the free-exercise-db
 const IMG_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
+const EXERCISE_IMAGE_ALIASES: Record<string, string> = {
+  Burpee: "Body-Up",
+  "Butt_Lift_(Bridge)": "Butt_Lift_Bridge",
+  High_Knee_Jog: "Fast_Skipping",
+  "Kettlebell_Turkish_Get-Up_(Squat_style)": "Kettlebell_Turkish_Get-Up_Squat_style",
+  "Pushups_(Close_and_Wide_Hand_Positions)": "Pushups_Close_and_Wide_Hand_Positions",
+};
+
 function exImg(id: string, count: number = 2): string[] {
-  return Array.from({ length: count }, (_, i) => `${IMG_BASE}/${id}/${i}.jpg`);
+  const resolvedId = EXERCISE_IMAGE_ALIASES[id] ?? id;
+  return Array.from({ length: count }, (_, i) => `${IMG_BASE}/${resolvedId}/${i}.jpg`);
 }
 
 export type EquipmentId =
