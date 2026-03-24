@@ -1,7 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
-import { buildWorkout, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
+import {
+  buildWorkoutFromAvailable,
+  filterAvailableExercises,
+  loadExerciseLibrary,
+  type EquipmentId,
+  type Exercise,
+} from "@/data/exercises";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Dumbbell, Zap, RefreshCw, Play } from "lucide-react";
@@ -11,9 +17,34 @@ type Screen = "equipment" | "config" | "workout";
 const Index = () => {
   const [screen, setScreen] = useState<Screen>("equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentId[]>([]);
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
+  const [loadingLibrary, setLoadingLibrary] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    loadExerciseLibrary()
+      .then((library) => {
+        if (!isActive) return;
+        setAllExercises(library);
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setLoadError(error instanceof Error ? error.message : "Failed to load exercise library.");
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingLibrary(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
@@ -21,16 +52,22 @@ const Index = () => {
     );
   }, []);
 
-  const availableCount = getAvailableExercises(selectedEquipment).length;
+  const availableExercises = useMemo(
+    () => filterAvailableExercises(allExercises, selectedEquipment),
+    [allExercises, selectedEquipment]
+  );
+
+  const availableCount = availableExercises.length;
+  const sliderMax = Math.max(4, Math.min(12, availableCount));
 
   const generateWorkout = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount);
+    const workout = buildWorkoutFromAvailable(availableExercises, exerciseCount);
     setExercises(workout);
     setScreen("workout");
   };
 
   const regenerate = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount);
+    const workout = buildWorkoutFromAvailable(availableExercises, exerciseCount);
     setExercises(workout);
   };
 
@@ -46,7 +83,7 @@ const Index = () => {
   }
 
   if (screen === "config") {
-    const totalTime = exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * (exercises.length - 1);
+    const totalTime = Math.max(0, exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * (exercises.length - 1));
     return (
       <div className="min-h-[100dvh] bg-background">
         <div className="max-w-md mx-auto px-4 py-6">
@@ -58,9 +95,15 @@ const Index = () => {
           </button>
 
           <h1 className="text-2xl font-bold mb-1">Your Workout</h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            {availableCount} exercises available with your equipment
-          </p>
+             <p className="text-muted-foreground text-sm mb-6">
+              {loadingLibrary
+                ? "Loading free-exercise-db library..."
+                : `${availableCount} exercises available with your equipment`}
+            </p>
+
+          {loadError && (
+            <p className="text-sm text-destructive mb-4">{loadError}</p>
+          )}
 
           {/* Settings */}
           <div className="space-y-6 mb-8">
@@ -72,8 +115,9 @@ const Index = () => {
                 value={[exerciseCount]}
                 onValueChange={([v]) => setExerciseCount(v)}
                 min={4}
-                max={Math.min(12, availableCount)}
+                max={sliderMax}
                 step={1}
+                disabled={loadingLibrary || !!loadError || availableCount === 0}
               />
             </div>
             <div>
@@ -91,7 +135,12 @@ const Index = () => {
           </div>
 
           {/* Generate */}
-          <Button onClick={generateWorkout} className="w-full mb-4" size="lg">
+          <Button
+            onClick={generateWorkout}
+            className="w-full mb-4"
+            size="lg"
+            disabled={loadingLibrary || !!loadError || availableCount === 0}
+          >
             <Zap className="h-4 w-4 mr-2" />
             Generate Workout
           </Button>
@@ -152,12 +201,13 @@ const Index = () => {
         <div className="sticky bottom-0 py-4 bg-background/90 backdrop-blur-sm mt-6 border-t">
           <Button
             onClick={() => {
-              const workout = buildWorkout(selectedEquipment, exerciseCount);
+              const workout = buildWorkoutFromAvailable(availableExercises, exerciseCount);
               setExercises(workout);
               setScreen("config");
             }}
             className="w-full"
             size="lg"
+            disabled={loadingLibrary || !!loadError || availableCount === 0}
           >
             Continue · {availableCount} exercises available
           </Button>
