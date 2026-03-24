@@ -14,6 +14,7 @@ function useImageCycler(images: string[], intervalMs: number = 1000) {
   return images[index] || images[0];
 }
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Play, Pause, SkipForward, RotateCcw, ChevronLeft } from "lucide-react";
 
 function ExerciseImage({ exercise }: { exercise: Exercise }) {
@@ -37,17 +38,28 @@ interface WorkoutTimerProps {
   restDuration: number;
   onComplete: () => void;
   onBack: () => void;
+  onSaveCompletedWorkout?: (name: string) => void;
+  defaultCompletedWorkoutName?: string;
 }
 
 type Phase = "exercise" | "rest" | "complete";
 type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
 
-export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: WorkoutTimerProps) {
+export function WorkoutTimer({
+  exercises,
+  restDuration,
+  onComplete,
+  onBack,
+  onSaveCompletedWorkout,
+  defaultCompletedWorkoutName = "My Workout",
+}: WorkoutTimerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("exercise");
   const [timeLeft, setTimeLeft] = useState(exercises[0]?.duration ?? 40);
   const [isRunning, setIsRunning] = useState(false);
   const [totalElapsed, setTotalElapsed] = useState(0);
+  const [completedWorkoutName, setCompletedWorkoutName] = useState("");
+  const [hasSavedCompletedWorkout, setHasSavedCompletedWorkout] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -215,6 +227,13 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
   const dashOffset = circumference - (progress / 100) * circumference;
 
   if (phase === "complete") {
+    const saveCompletedWorkout = () => {
+      if (!onSaveCompletedWorkout || hasSavedCompletedWorkout) return;
+      const name = completedWorkoutName.trim() || defaultCompletedWorkoutName;
+      onSaveCompletedWorkout(name);
+      setHasSavedCompletedWorkout(true);
+    };
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
         <div className="text-6xl mb-4">🎉</div>
@@ -222,6 +241,24 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
         <p className="text-muted-foreground mb-2">
           {exercises.length} exercises in {formatTime(totalElapsed)}
         </p>
+        {onSaveCompletedWorkout && (
+          <div className="w-full max-w-sm mt-4 space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={completedWorkoutName}
+                onChange={(e) => setCompletedWorkoutName(e.target.value)}
+                placeholder={defaultCompletedWorkoutName}
+                maxLength={80}
+              />
+              <Button variant="secondary" onClick={saveCompletedWorkout} disabled={hasSavedCompletedWorkout}>
+                {hasSavedCompletedWorkout ? "Saved" : "Save"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Save this completed workout for later.
+            </p>
+          </div>
+        )}
         <Button onClick={onBack} className="mt-6">
           <RotateCcw className="h-4 w-4 mr-2" />
           New Workout

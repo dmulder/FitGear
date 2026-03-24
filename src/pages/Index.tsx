@@ -49,6 +49,7 @@ const Index = () => {
   const [restSeconds, setRestSeconds] = useState(15);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
   const [workoutName, setWorkoutName] = useState("");
+  const [skipNextAutoBuild, setSkipNextAutoBuild] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
@@ -102,29 +103,43 @@ const Index = () => {
     setExercises(workout);
   };
 
-  const saveCurrentWorkout = () => {
-    if (exercises.length === 0) return;
+  const saveWorkout = (name: string, workoutExercises: Exercise[]) => {
+    if (workoutExercises.length === 0) return;
 
-    const trimmedName = workoutName.trim();
-    const name = trimmedName || makeDefaultWorkoutName(difficulty, exercises.length);
     const workout: SavedWorkout = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name,
       createdAt: new Date().toISOString(),
       difficulty,
-      exerciseCount: exercises.length,
+      exerciseCount: workoutExercises.length,
       restSeconds,
       selectedEquipment,
-      exerciseIds: exercises.map((exercise) => exercise.id),
+      exerciseIds: workoutExercises.map((exercise) => exercise.id),
     };
 
     const nextSavedWorkouts = [workout, ...savedWorkouts];
     setSavedWorkouts(nextSavedWorkouts);
     void saveSavedWorkouts(nextSavedWorkouts);
+  };
+
+  const saveCurrentWorkout = () => {
+    if (exercises.length === 0) return;
+
+    const trimmedName = workoutName.trim();
+    const name = trimmedName || makeDefaultWorkoutName(difficulty, exercises.length);
+    saveWorkout(name, exercises);
     setWorkoutName("");
   };
 
+  const saveCompletedWorkout = useCallback(
+    (name: string) => {
+      saveWorkout(name.trim() || makeDefaultWorkoutName(difficulty, exercises.length), exercises);
+    },
+    [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts]
+  );
+
   const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
+    setSkipNextAutoBuild(true);
     setSelectedEquipment(savedWorkout.selectedEquipment);
     setDifficulty(savedWorkout.difficulty);
     setExerciseCount(savedWorkout.exerciseCount);
@@ -134,8 +149,14 @@ const Index = () => {
 
   useEffect(() => {
     if (screen !== "config") return;
+
+    if (skipNextAutoBuild) {
+      setSkipNextAutoBuild(false);
+      return;
+    }
+
     setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty));
-  }, [screen, selectedEquipment, exerciseCount, difficulty]);
+  }, [screen, selectedEquipment, exerciseCount, difficulty, skipNextAutoBuild]);
 
   if (screen === "workout" && exercises.length > 0) {
     return (
@@ -144,6 +165,8 @@ const Index = () => {
         restDuration={restSeconds}
         onComplete={() => {}}
         onBack={() => setScreen("config")}
+        onSaveCompletedWorkout={saveCompletedWorkout}
+        defaultCompletedWorkoutName={makeDefaultWorkoutName(difficulty, exercises.length)}
       />
     );
   }
