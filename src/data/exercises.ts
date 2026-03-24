@@ -34,11 +34,15 @@ const EQUIPMENT_DEFINITIONS = [
 
   { id: "pull-up-bar", name: "Pull-Up Bar", category: "Bodyweight Stations" },
   { id: "dip-station", name: "Dip Station / Parallel Bars", category: "Bodyweight Stations" },
+  { id: "captains-chair", name: "Captain's Chair / VKR", category: "Bodyweight Stations" },
+  { id: "power-tower", name: "Power Tower", category: "Bodyweight Stations" },
   { id: "gymnastic-rings", name: "Gymnastic Rings", category: "Bodyweight Stations" },
 
   { id: "resistance-bands", name: "Resistance Bands", category: "Accessories" },
   { id: "trx-suspension", name: "TRX / Suspension Straps", category: "Accessories" },
   { id: "ab-wheel", name: "Ab Wheel", category: "Accessories" },
+  { id: "stationary-push-up-handles", name: "Stationary Push-Up Handles", category: "Accessories" },
+  { id: "rotating-push-up-handles", name: "Rotating Push-Up Handles", category: "Accessories" },
   { id: "stability-ball", name: "Exercise Ball", category: "Accessories" },
   { id: "foam-roller", name: "Foam Roller", category: "Accessories" },
   { id: "jump-rope", name: "Jump Rope", category: "Accessories" },
@@ -151,6 +155,10 @@ const LEVEL_TO_DIFFICULTY: Record<SourceLevel, Difficulty> = {
   expert: "hard",
 };
 
+const EQUIPMENT_IMPLIED_BY_SELECTION: Partial<Record<EquipmentId, EquipmentId[]>> = {
+  "power-tower": ["pull-up-bar", "dip-station", "captains-chair", "stationary-push-up-handles"],
+};
+
 const SOURCE_EQUIPMENT_TO_REQUIRED: Record<Exclude<SourceEquipment, null>, EquipmentId[]> = {
   "medicine ball": ["medicine-ball"],
   dumbbell: ["dumbbells"],
@@ -252,6 +260,21 @@ const FORCED_NO_EQUIPMENT_IDS = new Set<string>([
   "Bicycling",
   "Skating",
 ]);
+
+function getEffectiveSelectedEquipment(selectedEquipment: EquipmentId[]): Set<EquipmentId> {
+  const effectiveEquipment = new Set<EquipmentId>(selectedEquipment);
+
+  for (const equipmentId of selectedEquipment) {
+    const impliedEquipment = EQUIPMENT_IMPLIED_BY_SELECTION[equipmentId];
+    if (!impliedEquipment) continue;
+
+    for (const impliedId of impliedEquipment) {
+      effectiveEquipment.add(impliedId);
+    }
+  }
+
+  return effectiveEquipment;
+}
 
 function mapRequiredEquipment(sourceExercise: SourceExercise): EquipmentId[] {
   if (FORCED_NO_EQUIPMENT_IDS.has(sourceExercise.id)) {
@@ -365,10 +388,12 @@ function canUseExerciseForDifficulty(exerciseDifficulty: Difficulty, selectedDif
 }
 
 export function getAvailableExercises(selectedEquipment: EquipmentId[], difficulty: Difficulty = "hard"): Exercise[] {
+  const effectiveSelectedEquipment = getEffectiveSelectedEquipment(selectedEquipment);
+
   return allExercises.filter((exercise) => {
     if (!canUseExerciseForDifficulty(exercise.difficulty, difficulty)) return false;
     if (exercise.requiredEquipment.length === 0) return true;
-    return exercise.requiredEquipment.every((equipmentId) => selectedEquipment.includes(equipmentId));
+    return exercise.requiredEquipment.every((equipmentId) => effectiveSelectedEquipment.has(equipmentId));
   });
 }
 
