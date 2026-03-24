@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Dumbbell, RefreshCw, Play } from "lucide-react";
+import { Dumbbell, RefreshCw, Play, Trash2 } from "lucide-react";
 
 type Screen = "equipment" | "config" | "workout";
 const difficultySteps: Difficulty[] = ["easy", "medium", "hard"];
@@ -147,6 +147,12 @@ const Index = () => {
     setExercises(getExercisesByIds(savedWorkout.exerciseIds));
   };
 
+  const deleteSavedWorkout = (savedWorkoutId: string) => {
+    const nextSavedWorkouts = savedWorkouts.filter((savedWorkout) => savedWorkout.id !== savedWorkoutId);
+    setSavedWorkouts(nextSavedWorkouts);
+    void saveSavedWorkouts(nextSavedWorkouts);
+  };
+
   useEffect(() => {
     if (screen !== "config") return;
 
@@ -255,16 +261,27 @@ const Index = () => {
                 <label className="text-sm font-medium block">Saved workouts</label>
                 <div className="space-y-2 max-h-56 overflow-auto pr-1">
                   {savedWorkouts.map((savedWorkout) => (
-                    <button
-                      key={savedWorkout.id}
-                      onClick={() => loadSavedWorkout(savedWorkout)}
-                      className="w-full text-left p-3 rounded-lg border bg-card hover:border-primary/30 transition-colors"
-                    >
-                      <p className="text-sm font-medium truncate">{savedWorkout.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {difficultyLabels[savedWorkout.difficulty]} · {savedWorkout.exerciseCount} exercises · {savedWorkout.restSeconds}s rest
-                      </p>
-                    </button>
+                    <div key={savedWorkout.id} className="flex items-center gap-1 p-1 rounded-lg border bg-card">
+                      <button
+                        onClick={() => loadSavedWorkout(savedWorkout)}
+                        className="flex-1 text-left p-2 rounded-md hover:bg-muted/60 transition-colors"
+                      >
+                        <p className="text-sm font-medium truncate">{savedWorkout.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {difficultyLabels[savedWorkout.difficulty]} · {savedWorkout.exerciseCount} exercises · {savedWorkout.restSeconds}s rest
+                        </p>
+                      </button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteSavedWorkout(savedWorkout.id)}
+                        aria-label={`Delete ${savedWorkout.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
