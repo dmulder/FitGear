@@ -13,6 +13,7 @@ import jumpRopeImg from "@/assets/exercises/jump-rope.jpg";
 
 export type EquipmentId =
   | "dumbbells"
+  | "adjustable-dumbbells"
   | "barbell"
   | "ez-curl-bar"
   | "kettlebells"
@@ -27,13 +28,19 @@ export type EquipmentId =
   | "pec-deck"
   | "shoulder-press-machine"
   | "pull-up-bar"
+  | "power-tower"
+  | "captains-chair"
   | "dip-station"
   | "gymnastic-rings"
+  | "push-up-handles"
+  | "rotating-push-up-handles"
   | "resistance-bands"
   | "trx-suspension"
   | "ab-wheel"
   | "medicine-ball"
   | "stability-ball"
+  | "yoga-ball"
+  | "yoga-mat"
   | "bench"
   | "squat-rack"
   | "plyo-box"
@@ -41,11 +48,23 @@ export type EquipmentId =
   | "parallettes"
   | "jump-rope"
   | "foam-roller"
+  | "ankle-weights"
+  | "wrist-weights"
+  | "pull-up-assist-band"
+  | "door-anchor"
+  | "landmine-attachment"
+  | "hex-trap-bar"
+  | "dip-belt"
+  | "sandbag"
+  | "sledgehammer-tire"
+  | "agility-ladder"
+  | "bosu-ball"
   | "treadmill"
   | "stationary-bike"
   | "rowing-machine"
   | "elliptical"
-  | "stair-climber";
+  | "stair-climber"
+  | "air-bike";
 
 export interface EquipmentItem {
   id: EquipmentId;
