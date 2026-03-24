@@ -235,17 +235,33 @@ export function WorkoutTimer({
 
   const playCountdownNumber = useCallback(
     (secondsLeft: number) => {
-      const frequencyBySecond: Record<number, number> = { 3: 740, 2: 680, 1: 620 };
-      const frequency = frequencyBySecond[secondsLeft];
-      if (!frequency) return;
-      playTone(frequency, 0.12, 0.08, 0, "square");
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      const numberWords: Record<number, string> = {
+        3: "three",
+        2: "two",
+        1: "one",
+      };
+
+      const word = numberWords[secondsLeft];
+      if (!word) return;
+
+      cancelScheduledSpeech();
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.voice = speechVoiceRef.current;
+      utterance.rate = 1.02;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
     },
-    [playTone]
+    [cancelScheduledSpeech]
   );
 
-  const playDing = useCallback(() => {
-    playTone(1046.5, 0.18, 0.18, 0.22, "triangle");
-    playTone(1568, 0.22, 0.12, 0.29, "sine");
+  const playDing = useCallback((delaySeconds: number = 0) => {
+    playTone(1046.5, 0.18, 0.18, 0.22 + delaySeconds, "triangle");
+    playTone(1568, 0.22, 0.12, 0.29 + delaySeconds, "sine");
   }, [playTone]);
 
   useEffect(() => {
@@ -294,7 +310,7 @@ export function WorkoutTimer({
         }
 
         if (prev <= 1) {
-          playDing();
+          playDing(0.35);
           // Time's up for this phase
           if (phase === "exercise") {
             if (currentIndex < exercises.length - 1) {
