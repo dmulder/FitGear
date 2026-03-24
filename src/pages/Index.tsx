@@ -112,7 +112,7 @@ const Index = () => {
                 {exercises.map((ex, i) => (
                   <div key={ex.id} className="flex items-center gap-3 p-3 bg-card rounded-lg border">
                     <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
-                    <img src={ex.image} alt={ex.name} className="w-10 h-10 rounded object-cover" loading="lazy" />
+                    <img src={ex.images[0]} alt={ex.name} className="w-10 h-10 rounded object-cover" loading="lazy" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{ex.name}</p>
                       <p className="text-xs text-muted-foreground">{ex.muscleGroup} · {ex.duration}s</p>
