@@ -75,10 +75,13 @@ export interface EquipmentItem {
 export const equipmentList: EquipmentItem[] = [
   // Free Weights
   { id: "dumbbells", name: "Dumbbells", category: "Free Weights" },
+  { id: "adjustable-dumbbells", name: "Adjustable Dumbbells / Hand Weights", category: "Free Weights" },
   { id: "barbell", name: "Barbell", category: "Free Weights" },
   { id: "ez-curl-bar", name: "EZ Curl Bar", category: "Free Weights" },
   { id: "kettlebells", name: "Kettlebells", category: "Free Weights" },
   { id: "weight-plates", name: "Weight Plates", category: "Free Weights" },
+  { id: "hex-trap-bar", name: "Hex / Trap Bar", category: "Free Weights" },
+  { id: "sandbag", name: "Sandbag", category: "Free Weights" },
 
   // Machines
   { id: "cable-machine", name: "Cable Machine", category: "Machines" },
@@ -93,24 +96,41 @@ export const equipmentList: EquipmentItem[] = [
 
   // Bodyweight Stations
   { id: "pull-up-bar", name: "Pull-Up Bar", category: "Bodyweight Stations" },
+  { id: "power-tower", name: "Power Tower (Pull-Up / Dip / VKR)", category: "Bodyweight Stations" },
+  { id: "captains-chair", name: "Captain's Chair / VKR", category: "Bodyweight Stations" },
   { id: "dip-station", name: "Dip Station", category: "Bodyweight Stations" },
   { id: "gymnastic-rings", name: "Gymnastic Rings", category: "Bodyweight Stations" },
   { id: "parallettes", name: "Parallettes", category: "Bodyweight Stations" },
 
+  // Push-Up & Grip Accessories
+  { id: "push-up-handles", name: "Stationary Push-Up Handles", category: "Accessories" },
+  { id: "rotating-push-up-handles", name: "Rotating Push-Up Handles", category: "Accessories" },
+
   // Accessories
   { id: "resistance-bands", name: "Resistance Bands", category: "Accessories" },
+  { id: "pull-up-assist-band", name: "Pull-Up Assist Band", category: "Accessories" },
   { id: "trx-suspension", name: "TRX / Suspension Trainer", category: "Accessories" },
   { id: "ab-wheel", name: "Ab Wheel", category: "Accessories" },
   { id: "medicine-ball", name: "Medicine Ball", category: "Accessories" },
   { id: "stability-ball", name: "Stability Ball", category: "Accessories" },
+  { id: "yoga-ball", name: "Yoga Ball (Exercise Ball)", category: "Accessories" },
+  { id: "yoga-mat", name: "Yoga Mat", category: "Accessories" },
   { id: "jump-rope", name: "Jump Rope", category: "Accessories" },
   { id: "foam-roller", name: "Foam Roller", category: "Accessories" },
   { id: "battle-ropes", name: "Battle Ropes", category: "Accessories" },
+  { id: "ankle-weights", name: "Ankle Weights", category: "Accessories" },
+  { id: "wrist-weights", name: "Wrist Weights", category: "Accessories" },
+  { id: "door-anchor", name: "Door Anchor (for Bands)", category: "Accessories" },
+  { id: "bosu-ball", name: "BOSU Ball", category: "Accessories" },
+  { id: "agility-ladder", name: "Agility Ladder", category: "Accessories" },
+  { id: "sledgehammer-tire", name: "Sledgehammer & Tire", category: "Accessories" },
 
   // Benches & Racks
   { id: "bench", name: "Bench (Flat/Incline)", category: "Benches & Racks" },
   { id: "squat-rack", name: "Squat Rack / Power Rack", category: "Benches & Racks" },
   { id: "plyo-box", name: "Plyo Box", category: "Benches & Racks" },
+  { id: "landmine-attachment", name: "Landmine Attachment", category: "Benches & Racks" },
+  { id: "dip-belt", name: "Dip Belt (Weighted)", category: "Benches & Racks" },
 
   // Cardio Machines
   { id: "treadmill", name: "Treadmill", category: "Cardio Machines" },
@@ -118,6 +138,7 @@ export const equipmentList: EquipmentItem[] = [
   { id: "rowing-machine", name: "Rowing Machine", category: "Cardio Machines" },
   { id: "elliptical", name: "Elliptical", category: "Cardio Machines" },
   { id: "stair-climber", name: "Stair Climber", category: "Cardio Machines" },
+  { id: "air-bike", name: "Air Bike / Assault Bike", category: "Cardio Machines" },
 ];
 
 export interface Exercise {
