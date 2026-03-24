@@ -40,6 +40,7 @@ interface WorkoutTimerProps {
 }
 
 type Phase = "exercise" | "rest" | "complete";
+type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
 
 export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: WorkoutTimerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,6 +49,7 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
   const [isRunning, setIsRunning] = useState(false);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const currentExercise = exercises[currentIndex];
 
@@ -60,6 +62,80 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
     }
   }, []);
 
+  const getAudioContext = useCallback(() => {
+    if (typeof window === "undefined") return null;
+
+    const existing = audioContextRef.current;
+    if (existing && existing.state !== "closed") {
+      return existing;
+    }
+
+    const AudioContextCtor = window.AudioContext ?? (window as WindowWithWebkitAudio).webkitAudioContext;
+    if (!AudioContextCtor) return null;
+
+    const ctx = new AudioContextCtor();
+    audioContextRef.current = ctx;
+    return ctx;
+  }, []);
+
+  const ensureAudioReady = useCallback(() => {
+    const ctx = getAudioContext();
+    if (!ctx || ctx.state !== "suspended") return;
+    void ctx.resume();
+  }, [getAudioContext]);
+
+  const playTone = useCallback(
+    (frequency: number, durationSeconds: number, volume: number, delaySeconds: number = 0, type: OscillatorType = "sine") => {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        void ctx.resume();
+      }
+
+      const now = ctx.currentTime + delaySeconds;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + durationSeconds + 0.02);
+    },
+    [getAudioContext]
+  );
+
+  const playCountdownNumber = useCallback(
+    (secondsLeft: number) => {
+      const frequencyBySecond: Record<number, number> = { 3: 740, 2: 680, 1: 620 };
+      const frequency = frequencyBySecond[secondsLeft];
+      if (!frequency) return;
+      playTone(frequency, 0.12, 0.08, 0, "square");
+    },
+    [playTone]
+  );
+
+  const playDing = useCallback(() => {
+    playTone(1046.5, 0.18, 0.18, 0.22, "triangle");
+    playTone(1568, 0.22, 0.12, 0.29, "sine");
+  }, [playTone]);
+
+  useEffect(() => {
+    return () => {
+      const ctx = audioContextRef.current;
+      if (ctx && ctx.state !== "closed") {
+        void ctx.close();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!isRunning) {
       clearTimer();
@@ -68,7 +144,12 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
 
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
+        if (prev <= 3 && prev > 0) {
+          playCountdownNumber(prev);
+        }
+
         if (prev <= 1) {
+          playDing();
           // Time's up for this phase
           if (phase === "exercise") {
             if (currentIndex < exercises.length - 1) {
@@ -92,7 +173,17 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
     }, 1000);
 
     return clearTimer;
-  }, [isRunning, phase, currentIndex, exercises, restDuration, onComplete, clearTimer]);
+  }, [
+    isRunning,
+    phase,
+    currentIndex,
+    exercises,
+    restDuration,
+    onComplete,
+    clearTimer,
+    playCountdownNumber,
+    playDing,
+  ]);
 
   const skip = () => {
     clearTimer();
@@ -227,7 +318,12 @@ export function WorkoutTimer({ exercises, restDuration, onComplete, onBack }: Wo
         <Button
           size="icon"
           className="h-16 w-16 rounded-full"
-          onClick={() => setIsRunning(!isRunning)}
+          onClick={() => {
+            if (!isRunning) {
+              ensureAudioReady();
+            }
+            setIsRunning(!isRunning);
+          }}
         >
           {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
         </Button>
