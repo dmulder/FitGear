@@ -1,3 +1,5 @@
+import { stretchExerciseSeeds } from "@/data/stretch-exercise-seeds";
+
 // Image base URL for the free-exercise-db
 const IMG_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
@@ -143,6 +145,12 @@ export const equipmentList: EquipmentItem[] = [
   { id: "stair-climber", name: "Stair Climber", category: "Cardio Machines" },
   { id: "air-bike", name: "Air Bike / Assault Bike", category: "Cardio Machines" },
 ];
+
+const VALID_EQUIPMENT_IDS = new Set<EquipmentId>(equipmentList.map((equipment) => equipment.id));
+
+function isEquipmentId(value: string): value is EquipmentId {
+  return VALID_EQUIPMENT_IDS.has(value as EquipmentId);
+}
 
 export interface Exercise {
   id: string;
@@ -393,6 +401,18 @@ const equipmentExercises: ExerciseTemplate[] = [
   { id: "airbike-intervals", name: "Air Bike Intervals", description: "Alternate 10 seconds all-out effort with 10 seconds easy. The fan provides unlimited resistance.", muscleGroup: "Cardio", requiredEquipment: ["air-bike"], images: exImg("Air_Bike"), duration: 40 },
 ];
 
+const stretchExercises: ExerciseTemplate[] = stretchExerciseSeeds.map((stretch) => ({
+  id: stretch.id,
+  name: stretch.name,
+  description: stretch.description,
+  muscleGroup: stretch.muscleGroup,
+  requiredEquipment: stretch.requiredEquipment.filter(isEquipmentId),
+  images: exImg(stretch.sourceId),
+  duration: stretch.duration,
+}));
+
+const STRETCH_EXERCISE_IDS = new Set<string>(stretchExerciseSeeds.map((stretch) => stretch.id));
+
 const EASY_EXERCISE_IDS = new Set<string>([
   "squats",
   "lunges",
@@ -519,6 +539,7 @@ const DIFFICULTY_ORDER: Record<Difficulty, number> = {
 
 function classifyDifficulty(exerciseId: string): Difficulty {
   if (HARD_EXERCISE_IDS.has(exerciseId)) return "hard";
+  if (STRETCH_EXERCISE_IDS.has(exerciseId)) return "easy";
   if (EASY_EXERCISE_IDS.has(exerciseId)) return "easy";
   return "medium";
 }
@@ -527,7 +548,7 @@ function canUseExerciseForDifficulty(exerciseDifficulty: Difficulty, selectedDif
   return DIFFICULTY_ORDER[exerciseDifficulty] <= DIFFICULTY_ORDER[selectedDifficulty];
 }
 
-export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExercises].map((exercise) => ({
+export const allExercises: Exercise[] = [...bodyweightExercises, ...equipmentExercises, ...stretchExercises].map((exercise) => ({
   ...exercise,
   difficulty: classifyDifficulty(exercise.id),
 }));
