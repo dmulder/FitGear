@@ -79,6 +79,9 @@ export function WorkoutTimer({
   const [hasSavedCompletedWorkout, setHasSavedCompletedWorkout] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAnnouncedFirstExerciseRef = useRef(false);
+  const lastRestAnnouncementIndexRef = useRef(-1);
 
   const currentExercise = exercises[currentIndex];
 
@@ -90,6 +93,30 @@ export function WorkoutTimer({
       intervalRef.current = null;
     }
   }, []);
+
+  const cancelScheduledSpeech = useCallback(() => {
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = null;
+    }
+  }, []);
+
+  const speak = useCallback(
+    (text: string, delayMs: number = 0) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      cancelScheduledSpeech();
+
+      speechTimeoutRef.current = setTimeout(() => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        window.speechSynthesis.speak(utterance);
+      }, delayMs);
+    },
+    [cancelScheduledSpeech]
+  );
 
   const getAudioContext = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -158,12 +185,36 @@ export function WorkoutTimer({
 
   useEffect(() => {
     return () => {
+      cancelScheduledSpeech();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+
       const ctx = audioContextRef.current;
       if (ctx && ctx.state !== "closed") {
         void ctx.close();
       }
     };
-  }, []);
+  }, [cancelScheduledSpeech]);
+
+  useEffect(() => {
+    if (hasAnnouncedFirstExerciseRef.current || exercises.length === 0) return;
+
+    hasAnnouncedFirstExerciseRef.current = true;
+    speak(`First up, ${exercises[0].name}.`, 250);
+  }, [exercises, speak]);
+
+  useEffect(() => {
+    if (phase !== "rest") return;
+
+    const nextExercise = exercises[currentIndex + 1];
+    if (!nextExercise) return;
+
+    if (lastRestAnnouncementIndexRef.current === currentIndex) return;
+    lastRestAnnouncementIndexRef.current = currentIndex;
+
+    speak(`Next up, ${nextExercise.name}.`, 250);
+  }, [phase, currentIndex, exercises, speak]);
 
   useEffect(() => {
     if (!isRunning) {
