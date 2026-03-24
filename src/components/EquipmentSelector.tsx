@@ -1,6 +1,6 @@
 import { equipmentList, type EquipmentId } from "@/data/exercises";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dumbbell, Cog, User, Wrench, Armchair, Heart } from "lucide-react";
+import { Dumbbell, Cog, User, Wrench, Armchair, Heart, Shield } from "lucide-react";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   "Free Weights": <Dumbbell className="h-4 w-4" />,
@@ -10,6 +10,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   "Accessories": <Wrench className="h-4 w-4" />,
   "Benches & Racks": <Armchair className="h-4 w-4" />,
   "Cardio Machines": <Heart className="h-4 w-4" />,
+  Strongman: <Shield className="h-4 w-4" />,
 };
 
 interface EquipmentSelectorProps {
