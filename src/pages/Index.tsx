@@ -4,7 +4,7 @@ import { WorkoutTimer } from "@/components/WorkoutTimer";
 import { buildWorkout, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Dumbbell, Zap, RefreshCw } from "lucide-react";
+import { Dumbbell, Zap, RefreshCw, Play } from "lucide-react";
 
 type Screen = "equipment" | "config" | "workout";
 
