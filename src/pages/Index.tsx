@@ -10,7 +10,7 @@ import {
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Dumbbell, Zap, RefreshCw, Play } from "lucide-react";
+import { Dumbbell, RefreshCw, Play } from "lucide-react";
 
 type Screen = "equipment" | "config" | "workout";
 const difficultySteps: Difficulty[] = ["easy", "medium", "hard"];
@@ -75,16 +75,15 @@ const Index = () => {
 
   const difficultyIndex = difficultySteps.indexOf(difficulty);
 
-  const generateWorkout = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
-    setExercises(workout);
-    setScreen("workout");
-  };
-
   const regenerate = () => {
     const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
     setExercises(workout);
   };
+
+  useEffect(() => {
+    if (screen !== "config") return;
+    setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty));
+  }, [screen, selectedEquipment, exerciseCount, difficulty]);
 
   if (screen === "workout" && exercises.length > 0) {
     return (
@@ -98,7 +97,7 @@ const Index = () => {
   }
 
   if (screen === "config") {
-    const totalTime = exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * (exercises.length - 1);
+    const totalTime = exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * Math.max(exercises.length - 1, 0);
     return (
       <div className="min-h-[100dvh] bg-background">
         <div className="max-w-md mx-auto px-4 py-6">
@@ -159,12 +158,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Generate */}
-          <Button onClick={generateWorkout} className="w-full mb-4" size="lg">
-            <Zap className="h-4 w-4 mr-2" />
-            Generate Workout
-          </Button>
-
           {/* Preview */}
           {exercises.length > 0 && (
             <div>
@@ -222,11 +215,7 @@ const Index = () => {
         {/* Bottom Action */}
         <div className="sticky bottom-0 py-4 bg-background/90 backdrop-blur-sm mt-6 border-t">
           <Button
-            onClick={() => {
-              const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
-              setExercises(workout);
-              setScreen("config");
-            }}
+            onClick={() => setScreen("config")}
             className="w-full"
             size="lg"
           >
