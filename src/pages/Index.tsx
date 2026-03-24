@@ -170,7 +170,5 @@ const Index = () => {
   );
 };
 
-// Need to import Play for the start button
-import { Play } from "lucide-react";
 
 export default Index;
