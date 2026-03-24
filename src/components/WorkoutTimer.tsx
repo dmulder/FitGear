@@ -33,6 +33,23 @@ function ExerciseImage({ exercise }: { exercise: Exercise }) {
   );
 }
 
+function UpcomingExercisePreview({ exercise }: { exercise: Exercise }) {
+  const currentSrc = useImageCycler(exercise.images);
+  return (
+    <div className="w-full max-w-xs">
+      <img
+        src={currentSrc}
+        alt={exercise.name}
+        className="w-full h-40 object-contain rounded-lg bg-card opacity-60"
+        loading="lazy"
+      />
+      <p className="text-sm text-muted-foreground text-center mt-3 leading-relaxed px-2">
+        {exercise.description}
+      </p>
+    </div>
+  );
+}
+
 interface WorkoutTimerProps {
   exercises: Exercise[];
   restDuration: number;
@@ -331,14 +348,7 @@ export function WorkoutTimer({
 
         {/* Next exercise preview during rest */}
         {phase === "rest" && exercises[currentIndex + 1] && (
-          <div className="w-full max-w-xs">
-            <img
-              src={exercises[currentIndex + 1].images[0]}
-              alt={exercises[currentIndex + 1].name}
-              className="w-full h-40 object-contain rounded-lg bg-card opacity-60"
-              loading="lazy"
-            />
-          </div>
+          <UpcomingExercisePreview exercise={exercises[currentIndex + 1]} />
         )}
       </div>
 
