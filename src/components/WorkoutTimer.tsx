@@ -128,7 +128,7 @@ export function WorkoutTimer({
   const audioContextRef = useRef<AudioContext | null>(null);
   const speechVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasAnnouncedFirstExerciseRef = useRef(false);
+  const lastExerciseInstructionIndexRef = useRef(-1);
   const lastRestAnnouncementIndexRef = useRef(-1);
 
   const currentExercise = exercises[currentIndex];
@@ -279,11 +279,15 @@ export function WorkoutTimer({
   }, [cancelScheduledSpeech]);
 
   useEffect(() => {
-    if (hasAnnouncedFirstExerciseRef.current || exercises.length === 0) return;
+    if (phase !== "exercise") return;
+    if (!currentExercise) return;
 
-    hasAnnouncedFirstExerciseRef.current = true;
-    speak(`First up, ${exercises[0].name}.`, 250);
-  }, [exercises, speak]);
+    if (lastExerciseInstructionIndexRef.current === currentIndex) return;
+    lastExerciseInstructionIndexRef.current = currentIndex;
+
+    const intro = currentIndex === 0 ? "First up" : "Now";
+    speak(`${intro}, ${currentExercise.name}. ${currentExercise.description}`, 200);
+  }, [phase, currentIndex, currentExercise, speak]);
 
   useEffect(() => {
     if (phase !== "rest") return;
