@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import { buildWorkout, type EquipmentId, type Exercise, getAvailableExercises } from "@/data/exercises";
+import { loadSelectedEquipment, saveSelectedEquipment } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Dumbbell, Zap, RefreshCw, Play } from "lucide-react";
@@ -14,6 +15,31 @@ const Index = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
+  const [equipmentLoaded, setEquipmentLoaded] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadSelectedEquipment()
+      .then((savedEquipment) => {
+        if (!isMounted) return;
+        setSelectedEquipment(savedEquipment);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setEquipmentLoaded(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!equipmentLoaded) return;
+    void saveSelectedEquipment(selectedEquipment);
+  }, [selectedEquipment, equipmentLoaded]);
 
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
