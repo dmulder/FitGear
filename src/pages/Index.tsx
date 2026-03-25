@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import {
@@ -85,7 +85,7 @@ const Index = () => {
   const [workoutName, setWorkoutName] = useState("");
   const [viewedExerciseIndex, setViewedExerciseIndex] = useState<number | null>(null);
   const [viewedImageIndex, setViewedImageIndex] = useState(0);
-  const [skipNextAutoBuild, setSkipNextAutoBuild] = useState(false);
+  const skipNextAutoBuildRef = useRef(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
@@ -229,7 +229,7 @@ const Index = () => {
   };
 
   const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
-    setSkipNextAutoBuild(true);
+    skipNextAutoBuildRef.current = true;
     setSelectedEquipment(savedWorkout.selectedEquipment);
     setDifficulty(savedWorkout.difficulty);
     setWorkoutMode(savedWorkout.workoutMode ?? "all");
@@ -248,13 +248,13 @@ const Index = () => {
   useEffect(() => {
     if (screen !== "config") return;
 
-    if (skipNextAutoBuild) {
-      setSkipNextAutoBuild(false);
+    if (skipNextAutoBuildRef.current) {
+      skipNextAutoBuildRef.current = false;
       return;
     }
 
     setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus));
-  }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus, skipNextAutoBuild]);
+  }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus]);
 
   useEffect(() => {
     if (screen !== "config") {
