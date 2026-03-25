@@ -17,12 +17,14 @@ import {
   loadSavedWorkouts,
   loadWorkoutDifficulty,
   loadWorkoutMode,
+  loadCustomExerciseDuration,
   saveWorkoutFocus,
   saveSavedWorkouts,
   saveSelectedEquipment,
   type SavedWorkout,
   saveWorkoutDifficulty,
   saveWorkoutMode,
+  saveCustomExerciseDuration,
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +80,7 @@ const Index = () => {
   const [workoutFocus, setWorkoutFocus] = useState<WorkoutFocus>("all");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
+  const [customExerciseDuration, setCustomExerciseDuration] = useState<number | null>(null);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
   const [workoutName, setWorkoutName] = useState("");
   const [viewedExerciseIndex, setViewedExerciseIndex] = useState<number | null>(null);
@@ -94,14 +97,16 @@ const Index = () => {
       loadWorkoutMode(),
       loadWorkoutFocus(),
       loadSavedWorkouts(),
+      loadCustomExerciseDuration(),
     ])
-      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, savedWorkoutFocus, localSavedWorkouts]) => {
+      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, savedWorkoutFocus, localSavedWorkouts, savedCustomDuration]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
         setDifficulty(savedDifficulty);
         setWorkoutMode(savedWorkoutMode);
         setWorkoutFocus(savedWorkoutFocus);
         setSavedWorkouts(localSavedWorkouts);
+        setCustomExerciseDuration(savedCustomDuration);
       })
       .finally(() => {
         if (isMounted) {
@@ -133,6 +138,11 @@ const Index = () => {
     if (!settingsLoaded) return;
     void saveWorkoutFocus(workoutFocus);
   }, [workoutFocus, settingsLoaded]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    void saveCustomExerciseDuration(customExerciseDuration);
+  }, [customExerciseDuration, settingsLoaded]);
 
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
@@ -276,6 +286,7 @@ const Index = () => {
       <WorkoutTimer
         exercises={exercises}
         restDuration={restSeconds}
+        exerciseDurationOverride={customExerciseDuration}
         onComplete={() => {}}
         onBack={() => setScreen("config")}
         onSaveCompletedWorkout={saveCompletedWorkout}
@@ -285,7 +296,8 @@ const Index = () => {
   }
 
   if (screen === "config") {
-    const totalTime = exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * Math.max(exercises.length - 1, 0);
+    const effectiveDuration = (e: Exercise) => customExerciseDuration ?? e.duration;
+    const totalTime = exercises.reduce((s, e) => s + effectiveDuration(e), 0) + restSeconds * Math.max(exercises.length - 1, 0);
     return (
       <div className="min-h-[100dvh] bg-background">
         <div className="max-w-md mx-auto px-4 py-6">
@@ -381,6 +393,39 @@ const Index = () => {
               />
             </div>
 
+            <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+              <div>
+                <p className="text-sm font-medium">Custom exercise time</p>
+                <p className="text-xs text-muted-foreground">Override default duration for all exercises</p>
+              </div>
+              <Switch
+                checked={customExerciseDuration !== null}
+                onCheckedChange={(checked) =>
+                  setCustomExerciseDuration(checked ? 30 : null)
+                }
+                aria-label="Toggle custom exercise duration"
+              />
+            </div>
+            {customExerciseDuration !== null && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Exercise time: {customExerciseDuration}s
+                </label>
+                <Slider
+                  value={[customExerciseDuration]}
+                  onValueChange={([v]) => setCustomExerciseDuration(v)}
+                  min={10}
+                  max={120}
+                  step={5}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-2 px-0.5">
+                  <span>10s</span>
+                  <span>120s</span>
+                </div>
+              </div>
+            )}
+
+
             <div className="space-y-2">
               <label className="text-sm font-medium block">Save this workout</label>
               <div className="flex gap-2">
@@ -460,7 +505,7 @@ const Index = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{ex.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {ex.duration}s
+                        {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {effectiveDuration(ex)}s
                       </p>
                     </div>
                   </button>

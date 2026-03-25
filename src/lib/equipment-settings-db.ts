@@ -8,11 +8,13 @@ const DIFFICULTY_SETTINGS_KEY = "workout-difficulty";
 const WORKOUT_MODE_SETTINGS_KEY = "workout-mode";
 const WORKOUT_FOCUS_SETTINGS_KEY = "workout-focus";
 const SAVED_WORKOUTS_SETTINGS_KEY = "saved-workouts";
+const CUSTOM_EXERCISE_DURATION_KEY = "custom-exercise-duration";
 const LOCAL_STORAGE_EQUIPMENT_KEY = "fitgear:selected-equipment";
 const LOCAL_STORAGE_DIFFICULTY_KEY = "fitgear:workout-difficulty";
 const LOCAL_STORAGE_WORKOUT_MODE_KEY = "fitgear:workout-mode";
 const LOCAL_STORAGE_WORKOUT_FOCUS_KEY = "fitgear:workout-focus";
 const LOCAL_STORAGE_SAVED_WORKOUTS_KEY = "fitgear:saved-workouts";
+const LOCAL_STORAGE_CUSTOM_EXERCISE_DURATION_KEY = "fitgear:custom-exercise-duration";
 
 interface SettingsRecord<T> {
   key: string;
@@ -344,4 +346,50 @@ export async function saveSavedWorkouts(workouts: SavedWorkout[]): Promise<void>
   }
 
   window.localStorage.setItem(LOCAL_STORAGE_SAVED_WORKOUTS_KEY, JSON.stringify(workouts));
+}
+
+function parseCustomExerciseDuration(value: unknown): number | null {
+  if (typeof value === "number" && value >= 5 && value <= 120) return value;
+  return null;
+}
+
+export async function loadCustomExerciseDuration(): Promise<number | null> {
+  if (typeof window === "undefined") return null;
+
+  if ("indexedDB" in window) {
+    try {
+      const raw = await readSettingFromIndexedDb(CUSTOM_EXERCISE_DURATION_KEY);
+      return parseCustomExerciseDuration(raw);
+    } catch {
+      // Fall back to localStorage if IndexedDB is unavailable.
+    }
+  }
+
+  const raw = window.localStorage.getItem(LOCAL_STORAGE_CUSTOM_EXERCISE_DURATION_KEY);
+  if (!raw) return null;
+
+  try {
+    return parseCustomExerciseDuration(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export async function saveCustomExerciseDuration(duration: number | null): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  if ("indexedDB" in window) {
+    try {
+      await writeSettingToIndexedDb(CUSTOM_EXERCISE_DURATION_KEY, duration);
+      return;
+    } catch {
+      // Fall back to localStorage if IndexedDB fails.
+    }
+  }
+
+  if (duration === null) {
+    window.localStorage.removeItem(LOCAL_STORAGE_CUSTOM_EXERCISE_DURATION_KEY);
+  } else {
+    window.localStorage.setItem(LOCAL_STORAGE_CUSTOM_EXERCISE_DURATION_KEY, JSON.stringify(duration));
+  }
 }
