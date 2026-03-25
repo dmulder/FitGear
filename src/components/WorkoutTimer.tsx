@@ -351,7 +351,7 @@ export function WorkoutTimer({
           } else if (phase === "rest") {
             setPhase("exercise");
             setCurrentIndex((i) => i + 1);
-            return exercises[currentIndex + 1]?.duration ?? 40;
+            return getExerciseDuration(exercises[currentIndex + 1]) ?? 40;
           }
         }
         return prev - 1;
@@ -386,7 +386,7 @@ export function WorkoutTimer({
     } else if (phase === "rest") {
       setPhase("exercise");
       setCurrentIndex((i) => i + 1);
-      setTimeLeft(exercises[currentIndex + 1]?.duration ?? 40);
+      setTimeLeft(getExerciseDuration(exercises[currentIndex + 1]) ?? 40);
     }
   };
 
@@ -396,7 +396,7 @@ export function WorkoutTimer({
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const maxTime = phase === "exercise" ? (currentExercise?.duration ?? 40) : restDuration;
+  const maxTime = phase === "exercise" ? (currentExercise ? getExerciseDuration(currentExercise) : 40) : restDuration;
   const progress = maxTime > 0 ? ((maxTime - timeLeft) / maxTime) * 100 : 0;
   const circumference = 2 * Math.PI * 90;
   const dashOffset = circumference - (progress / 100) * circumference;
