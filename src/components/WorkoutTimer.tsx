@@ -370,6 +370,7 @@ export function WorkoutTimer({
     clearTimer,
     playCountdownNumber,
     playDing,
+    getExerciseDuration,
   ]);
 
   const skip = () => {
