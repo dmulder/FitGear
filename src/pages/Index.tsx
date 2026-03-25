@@ -393,6 +393,38 @@ const Index = () => {
               />
             </div>
 
+            <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+              <div>
+                <p className="text-sm font-medium">Custom exercise time</p>
+                <p className="text-xs text-muted-foreground">Override default duration for all exercises</p>
+              </div>
+              <Switch
+                checked={customExerciseDuration !== null}
+                onCheckedChange={(checked) =>
+                  setCustomExerciseDuration(checked ? 30 : null)
+                }
+                aria-label="Toggle custom exercise duration"
+              />
+            </div>
+            {customExerciseDuration !== null && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Exercise time: {customExerciseDuration}s
+                </label>
+                <Slider
+                  value={[customExerciseDuration]}
+                  onValueChange={([v]) => setCustomExerciseDuration(v)}
+                  min={10}
+                  max={120}
+                  step={5}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-2 px-0.5">
+                  <span>10s</span>
+                  <span>120s</span>
+                </div>
+              </div>
+            )
+
             <div className="space-y-2">
               <label className="text-sm font-medium block">Save this workout</label>
               <div className="flex gap-2">
@@ -472,7 +504,7 @@ const Index = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{ex.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {ex.duration}s
+                        {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {effectiveDuration(ex)}s
                       </p>
                     </div>
                   </button>
