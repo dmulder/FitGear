@@ -109,6 +109,16 @@ function pickPreferredVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoic
   return [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] ?? null;
 }
 
+function isSingleSentence(text: string): boolean {
+  const sentences = text
+    .trim()
+    .split(/[.!?]+(?=\s|$)/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  return sentences.length <= 1;
+}
+
 export function WorkoutTimer({
   exercises,
   restDuration,
@@ -286,7 +296,13 @@ export function WorkoutTimer({
     lastExerciseInstructionIndexRef.current = currentIndex;
 
     const intro = currentIndex === 0 ? "First up" : "Now";
-    speak(`${intro}, ${currentExercise.name}. ${currentExercise.description}`, 1000);
+    const description = currentExercise.description?.trim() ?? "";
+    const instruction =
+      description.length > 0 && isSingleSentence(description)
+        ? `${intro}, ${currentExercise.name}. ${description}`
+        : `${intro}, ${currentExercise.name}.`;
+
+    speak(instruction, 1000);
   }, [phase, currentIndex, currentExercise, speak]);
 
   useEffect(() => {
