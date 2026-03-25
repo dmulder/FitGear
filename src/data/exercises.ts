@@ -93,12 +93,14 @@ export function isEquipmentId(value: string): value is EquipmentId {
 }
 
 export type Difficulty = "easy" | "medium" | "hard";
+export type WorkoutMode = "all" | "stretch-only";
 
 export interface Exercise {
   id: string;
   name: string;
   description: string;
   muscleGroup: string;
+  category: string;
   requiredEquipment: EquipmentId[];
   images: string[];
   duration: number;
@@ -358,6 +360,7 @@ function toExercise(sourceExercise: SourceExercise): Exercise {
     name: sourceExercise.name,
     description: buildDescription(sourceExercise.instructions),
     muscleGroup: normalizeMuscleGroup(sourceExercise.primaryMuscles, sourceExercise.category),
+    category: sourceExercise.category,
     requiredEquipment: mapRequiredEquipment(sourceExercise),
     images: resolveImages(sourceExercise.images, sourceExercise.id),
     duration: getDuration(sourceExercise.category, difficulty),
@@ -388,9 +391,18 @@ function canUseExerciseForDifficulty(exerciseDifficulty: Difficulty, selectedDif
 }
 
 export function getAvailableExercises(selectedEquipment: EquipmentId[], difficulty: Difficulty = "hard"): Exercise[] {
+  return getAvailableExercisesForMode(selectedEquipment, difficulty, "all");
+}
+
+export function getAvailableExercisesForMode(
+  selectedEquipment: EquipmentId[],
+  difficulty: Difficulty = "hard",
+  workoutMode: WorkoutMode = "all"
+): Exercise[] {
   const effectiveSelectedEquipment = getEffectiveSelectedEquipment(selectedEquipment);
 
   return allExercises.filter((exercise) => {
+    if (workoutMode === "stretch-only" && exercise.category !== "stretching") return false;
     if (!canUseExerciseForDifficulty(exercise.difficulty, difficulty)) return false;
     if (exercise.requiredEquipment.length === 0) return true;
     return exercise.requiredEquipment.every((equipmentId) => effectiveSelectedEquipment.has(equipmentId));
@@ -411,9 +423,10 @@ function shuffle<T>(items: T[]): T[] {
 export function buildWorkout(
   selectedEquipment: EquipmentId[],
   exerciseCount: number = 8,
-  difficulty: Difficulty = "hard"
+  difficulty: Difficulty = "hard",
+  workoutMode: WorkoutMode = "all"
 ): Exercise[] {
-  const available = shuffle(getAvailableExercises(selectedEquipment, difficulty));
+  const available = shuffle(getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode));
   const targetCount = Math.min(exerciseCount, available.length);
 
   if (targetCount === 0) {

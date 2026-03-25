@@ -3,24 +3,28 @@ import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import {
   buildWorkout,
+  getAvailableExercisesForMode,
   getExercisesByIds,
   type Difficulty,
   type EquipmentId,
   type Exercise,
-  getAvailableExercises,
+  type WorkoutMode,
 } from "@/data/exercises";
 import {
   loadSelectedEquipment,
   loadSavedWorkouts,
   loadWorkoutDifficulty,
+  loadWorkoutMode,
   saveSavedWorkouts,
   saveSelectedEquipment,
   type SavedWorkout,
   saveWorkoutDifficulty,
+  saveWorkoutMode,
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Dumbbell, RefreshCw, Play, Trash2 } from "lucide-react";
 
 type Screen = "equipment" | "config" | "workout";
@@ -45,6 +49,7 @@ const Index = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentId[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [workoutMode, setWorkoutMode] = useState<WorkoutMode>("all");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
@@ -55,11 +60,12 @@ const Index = () => {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty(), loadSavedWorkouts()])
-      .then(([savedEquipment, savedDifficulty, localSavedWorkouts]) => {
+    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty(), loadWorkoutMode(), loadSavedWorkouts()])
+      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, localSavedWorkouts]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
         setDifficulty(savedDifficulty);
+        setWorkoutMode(savedWorkoutMode);
         setSavedWorkouts(localSavedWorkouts);
       })
       .finally(() => {
@@ -83,13 +89,18 @@ const Index = () => {
     void saveWorkoutDifficulty(difficulty);
   }, [difficulty, settingsLoaded]);
 
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    void saveWorkoutMode(workoutMode);
+  }, [workoutMode, settingsLoaded]);
+
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
       prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
     );
   }, []);
 
-  const availableCount = getAvailableExercises(selectedEquipment, difficulty).length;
+  const availableCount = getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode).length;
   const maxExercises = Math.max(4, Math.min(12, availableCount));
 
   useEffect(() => {
@@ -99,7 +110,7 @@ const Index = () => {
   const difficultyIndex = difficultySteps.indexOf(difficulty);
 
   const regenerate = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty);
+    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode);
     setExercises(workout);
   };
 
@@ -111,6 +122,7 @@ const Index = () => {
       name,
       createdAt: new Date().toISOString(),
       difficulty,
+      workoutMode,
       exerciseCount: workoutExercises.length,
       restSeconds,
       selectedEquipment,
@@ -131,17 +143,18 @@ const Index = () => {
     setWorkoutName("");
   };
 
-  const saveCompletedWorkout = useCallback(
+    const saveCompletedWorkout = useCallback(
     (name: string) => {
       saveWorkout(name.trim() || makeDefaultWorkoutName(difficulty, exercises.length), exercises);
     },
-    [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts]
+    [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts, workoutMode]
   );
 
   const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
     setSkipNextAutoBuild(true);
     setSelectedEquipment(savedWorkout.selectedEquipment);
     setDifficulty(savedWorkout.difficulty);
+    setWorkoutMode(savedWorkout.workoutMode ?? "all");
     setExerciseCount(savedWorkout.exerciseCount);
     setRestSeconds(savedWorkout.restSeconds);
     setExercises(getExercisesByIds(savedWorkout.exerciseIds));
@@ -161,8 +174,8 @@ const Index = () => {
       return;
     }
 
-    setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty));
-  }, [screen, selectedEquipment, exerciseCount, difficulty, skipNextAutoBuild]);
+    setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode));
+  }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, skipNextAutoBuild]);
 
   if (screen === "workout" && exercises.length > 0) {
     return (
@@ -212,6 +225,18 @@ const Index = () => {
                 <span>Medium</span>
                 <span>Hard</span>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+              <div>
+                <p className="text-sm font-medium">Stretch-only workout</p>
+                <p className="text-xs text-muted-foreground">Only include stretching exercises</p>
+              </div>
+              <Switch
+                checked={workoutMode === "stretch-only"}
+                onCheckedChange={(checked) => setWorkoutMode(checked ? "stretch-only" : "all")}
+                aria-label="Toggle stretch-only workout"
+              />
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">
@@ -269,6 +294,7 @@ const Index = () => {
                         <p className="text-sm font-medium truncate">{savedWorkout.name}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {difficultyLabels[savedWorkout.difficulty]} · {savedWorkout.exerciseCount} exercises · {savedWorkout.restSeconds}s rest
+                          {savedWorkout.workoutMode === "stretch-only" ? " · Stretch only" : ""}
                         </p>
                       </button>
                       <Button
