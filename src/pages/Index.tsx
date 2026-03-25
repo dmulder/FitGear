@@ -423,7 +423,8 @@ const Index = () => {
                   <span>120s</span>
                 </div>
               </div>
-            )
+            )}
+
 
             <div className="space-y-2">
               <label className="text-sm font-medium block">Save this workout</label>
