@@ -17,12 +17,14 @@ import {
   loadSavedWorkouts,
   loadWorkoutDifficulty,
   loadWorkoutMode,
+  loadCustomExerciseDuration,
   saveWorkoutFocus,
   saveSavedWorkouts,
   saveSelectedEquipment,
   type SavedWorkout,
   saveWorkoutDifficulty,
   saveWorkoutMode,
+  saveCustomExerciseDuration,
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +80,7 @@ const Index = () => {
   const [workoutFocus, setWorkoutFocus] = useState<WorkoutFocus>("all");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
+  const [customExerciseDuration, setCustomExerciseDuration] = useState<number | null>(null);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
   const [workoutName, setWorkoutName] = useState("");
   const [viewedExerciseIndex, setViewedExerciseIndex] = useState<number | null>(null);
@@ -94,14 +97,16 @@ const Index = () => {
       loadWorkoutMode(),
       loadWorkoutFocus(),
       loadSavedWorkouts(),
+      loadCustomExerciseDuration(),
     ])
-      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, savedWorkoutFocus, localSavedWorkouts]) => {
+      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, savedWorkoutFocus, localSavedWorkouts, savedCustomDuration]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
         setDifficulty(savedDifficulty);
         setWorkoutMode(savedWorkoutMode);
         setWorkoutFocus(savedWorkoutFocus);
         setSavedWorkouts(localSavedWorkouts);
+        setCustomExerciseDuration(savedCustomDuration);
       })
       .finally(() => {
         if (isMounted) {
@@ -133,6 +138,11 @@ const Index = () => {
     if (!settingsLoaded) return;
     void saveWorkoutFocus(workoutFocus);
   }, [workoutFocus, settingsLoaded]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    void saveCustomExerciseDuration(customExerciseDuration);
+  }, [customExerciseDuration, settingsLoaded]);
 
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
