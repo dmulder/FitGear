@@ -286,6 +286,7 @@ const Index = () => {
       <WorkoutTimer
         exercises={exercises}
         restDuration={restSeconds}
+        exerciseDurationOverride={customExerciseDuration}
         onComplete={() => {}}
         onBack={() => setScreen("config")}
         onSaveCompletedWorkout={saveCompletedWorkout}
