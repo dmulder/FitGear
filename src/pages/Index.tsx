@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import {
@@ -25,7 +25,21 @@ import {
   saveWorkoutMode,
 } from "@/lib/equipment-settings-db";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Dumbbell, RefreshCw, Play, Trash2 } from "lucide-react";
@@ -66,6 +80,8 @@ const Index = () => {
   const [restSeconds, setRestSeconds] = useState(15);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
   const [workoutName, setWorkoutName] = useState("");
+  const [viewedExerciseIndex, setViewedExerciseIndex] = useState<number | null>(null);
+  const [viewedImageIndex, setViewedImageIndex] = useState(0);
   const [skipNextAutoBuild, setSkipNextAutoBuild] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -124,7 +140,11 @@ const Index = () => {
     );
   }, []);
 
-  const availableCount = getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode, workoutFocus).length;
+  const availableExercises = useMemo(
+    () => getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode, workoutFocus),
+    [selectedEquipment, difficulty, workoutMode, workoutFocus]
+  );
+  const availableCount = availableExercises.length;
   const maxExercises = Math.max(4, Math.min(12, availableCount));
 
   useEffect(() => {
@@ -168,12 +188,35 @@ const Index = () => {
     setWorkoutName("");
   };
 
-    const saveCompletedWorkout = useCallback(
+  const saveCompletedWorkout = useCallback(
     (name: string) => {
       saveWorkout(name.trim() || makeDefaultWorkoutName(difficulty, exercises.length), exercises);
     },
     [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts, workoutMode, workoutFocus]
   );
+
+  const viewedExercise = viewedExerciseIndex !== null ? exercises[viewedExerciseIndex] : null;
+
+  const swapCandidates = useMemo(() => {
+    const byId = new Map(availableExercises.map((exercise) => [exercise.id, exercise]));
+
+    if (viewedExercise && !byId.has(viewedExercise.id)) {
+      byId.set(viewedExercise.id, viewedExercise);
+    }
+
+    return [...byId.values()];
+  }, [availableExercises, viewedExercise]);
+
+  const swapViewedExercise = (exerciseId: string) => {
+    if (viewedExerciseIndex === null) return;
+
+    const replacement = swapCandidates.find((exercise) => exercise.id === exerciseId);
+    if (!replacement) return;
+
+    setExercises((prev) =>
+      prev.map((exercise, index) => (index === viewedExerciseIndex ? replacement : exercise))
+    );
+  };
 
   const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
     setSkipNextAutoBuild(true);
@@ -202,6 +245,31 @@ const Index = () => {
 
     setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus));
   }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus, skipNextAutoBuild]);
+
+  useEffect(() => {
+    if (screen !== "config") {
+      setViewedExerciseIndex(null);
+      return;
+    }
+
+    if (viewedExerciseIndex !== null && viewedExerciseIndex >= exercises.length) {
+      setViewedExerciseIndex(null);
+    }
+  }, [screen, viewedExerciseIndex, exercises.length]);
+
+  useEffect(() => {
+    setViewedImageIndex(0);
+
+    if (!viewedExercise || viewedExercise.images.length <= 1) {
+      return;
+    }
+
+    const imageInterval = setInterval(() => {
+      setViewedImageIndex((currentIndex) => (currentIndex + 1) % viewedExercise.images.length);
+    }, 1200);
+
+    return () => clearInterval(imageInterval);
+  }, [viewedExercise?.id, viewedExercise?.images.length]);
 
   if (screen === "workout" && exercises.length > 0) {
     return (
@@ -381,7 +449,12 @@ const Index = () => {
               </div>
               <div className="space-y-2">
                 {exercises.map((ex, i) => (
-                  <div key={ex.id} className="flex items-center gap-3 p-3 bg-card rounded-lg border">
+                  <button
+                    key={`${ex.id}-${i}`}
+                    type="button"
+                    onClick={() => setViewedExerciseIndex(i)}
+                    className="w-full flex items-center gap-3 p-3 bg-card rounded-lg border text-left transition-colors hover:bg-muted/60"
+                  >
                     <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
                     <img src={ex.images[0]} alt={ex.name} className="w-10 h-10 rounded object-cover" loading="lazy" />
                     <div className="flex-1 min-w-0">
@@ -390,7 +463,7 @@ const Index = () => {
                         {ex.muscleGroup} · {difficultyLabels[ex.difficulty]} · {ex.duration}s
                       </p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
               <Button onClick={() => setScreen("workout")} className="w-full mt-4" size="lg">
@@ -399,6 +472,76 @@ const Index = () => {
               </Button>
             </div>
           )}
+
+          <Dialog open={viewedExerciseIndex !== null} onOpenChange={(open) => !open && setViewedExerciseIndex(null)}>
+            <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
+              {viewedExercise && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>{viewedExercise.name}</DialogTitle>
+                    <DialogDescription>
+                      {viewedExercise.muscleGroup} · {difficultyLabels[viewedExercise.difficulty]} · {viewedExercise.duration}s
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="rounded-lg border bg-card p-2">
+                        {viewedExercise.images.length > 0 ? (
+                          <img
+                            src={viewedExercise.images[viewedImageIndex] ?? viewedExercise.images[0]}
+                            alt={viewedExercise.name}
+                            className="w-full h-56 object-contain rounded"
+                          />
+                        ) : (
+                          <div className="w-full h-56 rounded flex items-center justify-center text-sm text-muted-foreground">
+                            No image available
+                          </div>
+                        )}
+                      </div>
+                      {viewedExercise.images.length > 1 && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          Image {viewedImageIndex + 1} of {viewedExercise.images.length}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">How to do it</p>
+                      {viewedExercise.instructions.length > 0 ? (
+                        <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+                          {viewedExercise.instructions.map((instruction, stepIndex) => (
+                            <li key={`${viewedExercise.id}-step-${stepIndex}`}>{instruction}</li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{viewedExercise.description}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Swap this exercise</p>
+                      <Select value={viewedExercise.id} onValueChange={swapViewedExercise}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose replacement" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {swapCandidates.map((exerciseOption) => (
+                            <SelectItem key={exerciseOption.id} value={exerciseOption.id}>
+                              {exerciseOption.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        List is filtered by current equipment, difficulty, workout mode, and focus.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );

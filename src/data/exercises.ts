@@ -100,6 +100,7 @@ export interface Exercise {
   id: string;
   name: string;
   description: string;
+  instructions: string[];
   muscleGroup: string;
   category: string;
   requiredEquipment: EquipmentId[];
@@ -360,6 +361,7 @@ function toExercise(sourceExercise: SourceExercise): Exercise {
     id: sourceExercise.id,
     name: sourceExercise.name,
     description: buildDescription(sourceExercise.instructions),
+    instructions: sourceExercise.instructions.map((instruction) => instruction.trim()).filter(Boolean),
     muscleGroup: normalizeMuscleGroup(sourceExercise.primaryMuscles, sourceExercise.category),
     category: sourceExercise.category,
     requiredEquipment: mapRequiredEquipment(sourceExercise),
