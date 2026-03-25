@@ -53,6 +53,7 @@ function UpcomingExercisePreview({ exercise }: { exercise: Exercise }) {
 interface WorkoutTimerProps {
   exercises: Exercise[];
   restDuration: number;
+  exerciseDurationOverride?: number | null;
   onComplete: () => void;
   onBack: () => void;
   onSaveCompletedWorkout?: (name: string) => void;
@@ -122,11 +123,16 @@ function isSingleSentence(text: string): boolean {
 export function WorkoutTimer({
   exercises,
   restDuration,
+  exerciseDurationOverride,
   onComplete,
   onBack,
   onSaveCompletedWorkout,
   defaultCompletedWorkoutName = "My Workout",
 }: WorkoutTimerProps) {
+  const getExerciseDuration = useCallback(
+    (exercise: Exercise) => exerciseDurationOverride ?? exercise.duration,
+    [exerciseDurationOverride]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("exercise");
   const [timeLeft, setTimeLeft] = useState(exercises[0]?.duration ?? 40);
