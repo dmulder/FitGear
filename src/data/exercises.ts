@@ -94,6 +94,7 @@ export function isEquipmentId(value: string): value is EquipmentId {
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type WorkoutMode = "all" | "stretch-only";
+export type WorkoutFocus = "all" | "upper-body" | "lower-body" | "core" | "full-body";
 
 export interface Exercise {
   id: string;
@@ -374,6 +375,57 @@ const DIFFICULTY_ORDER: Record<Difficulty, number> = {
   hard: 2,
 };
 
+const UPPER_BODY_KEYWORDS = [
+  "chest",
+  "back",
+  "shoulder",
+  "bicep",
+  "tricep",
+  "trap",
+  "lat",
+  "forearm",
+  "neck",
+  "deltoid",
+];
+
+const LOWER_BODY_KEYWORDS = [
+  "leg",
+  "quad",
+  "hamstring",
+  "glute",
+  "calf",
+  "adductor",
+  "abductor",
+  "hip flexor",
+];
+
+const CORE_KEYWORDS = ["ab", "oblique", "core", "waist", "lower back", "spine", "serratus"];
+
+function includesAnyKeyword(value: string, keywords: string[]): boolean {
+  return keywords.some((keyword) => value.includes(keyword));
+}
+
+function matchesWorkoutFocus(exercise: Exercise, workoutFocus: WorkoutFocus): boolean {
+  if (workoutFocus === "all") return true;
+
+  const muscleGroup = exercise.muscleGroup.toLowerCase();
+  const category = exercise.category.toLowerCase();
+
+  if (workoutFocus === "upper-body") {
+    return includesAnyKeyword(muscleGroup, UPPER_BODY_KEYWORDS);
+  }
+
+  if (workoutFocus === "lower-body") {
+    return includesAnyKeyword(muscleGroup, LOWER_BODY_KEYWORDS);
+  }
+
+  if (workoutFocus === "core") {
+    return includesAnyKeyword(muscleGroup, CORE_KEYWORDS);
+  }
+
+  return muscleGroup.includes("full body") || category === "cardio" || category === "plyometrics";
+}
+
 export const allExercises: Exercise[] = Object.values(sourceExerciseModules)
   .map(toExercise)
   .sort((a, b) => a.name.localeCompare(b.name));
@@ -391,18 +443,20 @@ function canUseExerciseForDifficulty(exerciseDifficulty: Difficulty, selectedDif
 }
 
 export function getAvailableExercises(selectedEquipment: EquipmentId[], difficulty: Difficulty = "hard"): Exercise[] {
-  return getAvailableExercisesForMode(selectedEquipment, difficulty, "all");
+  return getAvailableExercisesForMode(selectedEquipment, difficulty, "all", "all");
 }
 
 export function getAvailableExercisesForMode(
   selectedEquipment: EquipmentId[],
   difficulty: Difficulty = "hard",
-  workoutMode: WorkoutMode = "all"
+  workoutMode: WorkoutMode = "all",
+  workoutFocus: WorkoutFocus = "all"
 ): Exercise[] {
   const effectiveSelectedEquipment = getEffectiveSelectedEquipment(selectedEquipment);
 
   return allExercises.filter((exercise) => {
     if (workoutMode === "stretch-only" && exercise.category !== "stretching") return false;
+    if (!matchesWorkoutFocus(exercise, workoutFocus)) return false;
     if (!canUseExerciseForDifficulty(exercise.difficulty, difficulty)) return false;
     if (exercise.requiredEquipment.length === 0) return true;
     return exercise.requiredEquipment.every((equipmentId) => effectiveSelectedEquipment.has(equipmentId));
@@ -424,9 +478,10 @@ export function buildWorkout(
   selectedEquipment: EquipmentId[],
   exerciseCount: number = 8,
   difficulty: Difficulty = "hard",
-  workoutMode: WorkoutMode = "all"
+  workoutMode: WorkoutMode = "all",
+  workoutFocus: WorkoutFocus = "all"
 ): Exercise[] {
-  const available = shuffle(getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode));
+  const available = shuffle(getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode, workoutFocus));
   const targetCount = Math.min(exerciseCount, available.length);
 
   if (targetCount === 0) {

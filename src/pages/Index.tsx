@@ -8,13 +8,16 @@ import {
   type Difficulty,
   type EquipmentId,
   type Exercise,
+  type WorkoutFocus,
   type WorkoutMode,
 } from "@/data/exercises";
 import {
+  loadWorkoutFocus,
   loadSelectedEquipment,
   loadSavedWorkouts,
   loadWorkoutDifficulty,
   loadWorkoutMode,
+  saveWorkoutFocus,
   saveSavedWorkouts,
   saveSelectedEquipment,
   type SavedWorkout,
@@ -36,6 +39,14 @@ const difficultyLabels: Record<Difficulty, string> = {
   hard: "Hard",
 };
 
+const workoutFocusOptions: Array<{ id: WorkoutFocus; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "upper-body", label: "Upper" },
+  { id: "lower-body", label: "Lower" },
+  { id: "core", label: "Core" },
+  { id: "full-body", label: "Full" },
+];
+
 function makeDefaultWorkoutName(difficulty: Difficulty, exerciseCount: number): string {
   const dateLabel = new Date().toLocaleDateString(undefined, {
     month: "short",
@@ -50,6 +61,7 @@ const Index = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [workoutMode, setWorkoutMode] = useState<WorkoutMode>("all");
+  const [workoutFocus, setWorkoutFocus] = useState<WorkoutFocus>("all");
   const [exerciseCount, setExerciseCount] = useState(6);
   const [restSeconds, setRestSeconds] = useState(15);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
@@ -60,12 +72,19 @@ const Index = () => {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([loadSelectedEquipment(), loadWorkoutDifficulty(), loadWorkoutMode(), loadSavedWorkouts()])
-      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, localSavedWorkouts]) => {
+    Promise.all([
+      loadSelectedEquipment(),
+      loadWorkoutDifficulty(),
+      loadWorkoutMode(),
+      loadWorkoutFocus(),
+      loadSavedWorkouts(),
+    ])
+      .then(([savedEquipment, savedDifficulty, savedWorkoutMode, savedWorkoutFocus, localSavedWorkouts]) => {
         if (!isMounted) return;
         setSelectedEquipment(savedEquipment);
         setDifficulty(savedDifficulty);
         setWorkoutMode(savedWorkoutMode);
+        setWorkoutFocus(savedWorkoutFocus);
         setSavedWorkouts(localSavedWorkouts);
       })
       .finally(() => {
@@ -94,13 +113,18 @@ const Index = () => {
     void saveWorkoutMode(workoutMode);
   }, [workoutMode, settingsLoaded]);
 
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    void saveWorkoutFocus(workoutFocus);
+  }, [workoutFocus, settingsLoaded]);
+
   const toggleEquipment = useCallback((id: EquipmentId) => {
     setSelectedEquipment((prev) =>
       prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
     );
   }, []);
 
-  const availableCount = getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode).length;
+  const availableCount = getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode, workoutFocus).length;
   const maxExercises = Math.max(4, Math.min(12, availableCount));
 
   useEffect(() => {
@@ -110,7 +134,7 @@ const Index = () => {
   const difficultyIndex = difficultySteps.indexOf(difficulty);
 
   const regenerate = () => {
-    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode);
+    const workout = buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus);
     setExercises(workout);
   };
 
@@ -123,6 +147,7 @@ const Index = () => {
       createdAt: new Date().toISOString(),
       difficulty,
       workoutMode,
+      workoutFocus,
       exerciseCount: workoutExercises.length,
       restSeconds,
       selectedEquipment,
@@ -147,7 +172,7 @@ const Index = () => {
     (name: string) => {
       saveWorkout(name.trim() || makeDefaultWorkoutName(difficulty, exercises.length), exercises);
     },
-    [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts, workoutMode]
+    [difficulty, exercises, restSeconds, selectedEquipment, savedWorkouts, workoutMode, workoutFocus]
   );
 
   const loadSavedWorkout = (savedWorkout: SavedWorkout) => {
@@ -155,6 +180,7 @@ const Index = () => {
     setSelectedEquipment(savedWorkout.selectedEquipment);
     setDifficulty(savedWorkout.difficulty);
     setWorkoutMode(savedWorkout.workoutMode ?? "all");
+    setWorkoutFocus(savedWorkout.workoutFocus ?? "all");
     setExerciseCount(savedWorkout.exerciseCount);
     setRestSeconds(savedWorkout.restSeconds);
     setExercises(getExercisesByIds(savedWorkout.exerciseIds));
@@ -174,8 +200,8 @@ const Index = () => {
       return;
     }
 
-    setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode));
-  }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, skipNextAutoBuild]);
+    setExercises(buildWorkout(selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus));
+  }, [screen, selectedEquipment, exerciseCount, difficulty, workoutMode, workoutFocus, skipNextAutoBuild]);
 
   if (screen === "workout" && exercises.length > 0) {
     return (
@@ -238,6 +264,30 @@ const Index = () => {
                 aria-label="Toggle stretch-only workout"
               />
             </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Workout focus</label>
+              <div className="grid grid-cols-5 gap-2">
+                {workoutFocusOptions.map((focusOption) => {
+                  const isActive = workoutFocus === focusOption.id;
+
+                  return (
+                    <button
+                      key={focusOption.id}
+                      type="button"
+                      onClick={() => setWorkoutFocus(focusOption.id)}
+                      className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                        isActive
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {focusOption.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium mb-2 block">
                 Exercises: {exerciseCount}
@@ -295,6 +345,9 @@ const Index = () => {
                         <p className="text-xs text-muted-foreground mt-1">
                           {difficultyLabels[savedWorkout.difficulty]} · {savedWorkout.exerciseCount} exercises · {savedWorkout.restSeconds}s rest
                           {savedWorkout.workoutMode === "stretch-only" ? " · Stretch only" : ""}
+                          {savedWorkout.workoutFocus !== "all"
+                            ? ` · ${savedWorkout.workoutFocus.replace("-", " ")}`
+                            : ""}
                         </p>
                       </button>
                       <Button

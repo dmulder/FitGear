@@ -1,4 +1,4 @@
-import type { Difficulty, EquipmentId, WorkoutMode } from "@/data/exercises";
+import type { Difficulty, EquipmentId, WorkoutFocus, WorkoutMode } from "@/data/exercises";
 
 const DB_NAME = "fitgear-db";
 const DB_VERSION = 1;
@@ -6,10 +6,12 @@ const STORE_NAME = "settings";
 const EQUIPMENT_SETTINGS_KEY = "selected-equipment";
 const DIFFICULTY_SETTINGS_KEY = "workout-difficulty";
 const WORKOUT_MODE_SETTINGS_KEY = "workout-mode";
+const WORKOUT_FOCUS_SETTINGS_KEY = "workout-focus";
 const SAVED_WORKOUTS_SETTINGS_KEY = "saved-workouts";
 const LOCAL_STORAGE_EQUIPMENT_KEY = "fitgear:selected-equipment";
 const LOCAL_STORAGE_DIFFICULTY_KEY = "fitgear:workout-difficulty";
 const LOCAL_STORAGE_WORKOUT_MODE_KEY = "fitgear:workout-mode";
+const LOCAL_STORAGE_WORKOUT_FOCUS_KEY = "fitgear:workout-focus";
 const LOCAL_STORAGE_SAVED_WORKOUTS_KEY = "fitgear:saved-workouts";
 
 interface SettingsRecord<T> {
@@ -23,6 +25,7 @@ export interface SavedWorkout {
   createdAt: string;
   difficulty: Difficulty;
   workoutMode: WorkoutMode;
+  workoutFocus: WorkoutFocus;
   exerciseCount: number;
   restSeconds: number;
   selectedEquipment: EquipmentId[];
@@ -45,6 +48,14 @@ function parseWorkoutMode(value: unknown): WorkoutMode {
   return value === "stretch-only" ? "stretch-only" : "all";
 }
 
+function parseWorkoutFocus(value: unknown): WorkoutFocus {
+  if (value === "upper-body" || value === "lower-body" || value === "core" || value === "full-body") {
+    return value;
+  }
+
+  return "all";
+}
+
 function parseSavedWorkout(value: unknown): SavedWorkout | null {
   if (!value || typeof value !== "object") return null;
 
@@ -58,6 +69,7 @@ function parseSavedWorkout(value: unknown): SavedWorkout | null {
 
   const difficulty = parseDifficulty(candidate.difficulty);
   const workoutMode = parseWorkoutMode(candidate.workoutMode);
+  const workoutFocus = parseWorkoutFocus(candidate.workoutFocus);
   const selectedEquipment = parseEquipmentList(candidate.selectedEquipment);
   const exerciseIds = candidate.exerciseIds.filter((id): id is string => typeof id === "string");
 
@@ -67,6 +79,7 @@ function parseSavedWorkout(value: unknown): SavedWorkout | null {
     createdAt: candidate.createdAt,
     difficulty,
     workoutMode,
+    workoutFocus,
     exerciseCount: candidate.exerciseCount,
     restSeconds: candidate.restSeconds,
     selectedEquipment,
@@ -261,6 +274,38 @@ export async function saveWorkoutMode(workoutMode: WorkoutMode): Promise<void> {
   }
 
   window.localStorage.setItem(LOCAL_STORAGE_WORKOUT_MODE_KEY, workoutMode);
+}
+
+export async function loadWorkoutFocus(): Promise<WorkoutFocus> {
+  if (typeof window === "undefined") return "all";
+
+  if ("indexedDB" in window) {
+    try {
+      const raw = await readSettingFromIndexedDb(WORKOUT_FOCUS_SETTINGS_KEY);
+      return parseWorkoutFocus(raw);
+    } catch {
+      // Fall back to localStorage if IndexedDB is unavailable.
+    }
+  }
+
+  const raw = window.localStorage.getItem(LOCAL_STORAGE_WORKOUT_FOCUS_KEY);
+  if (!raw) return "all";
+  return parseWorkoutFocus(raw);
+}
+
+export async function saveWorkoutFocus(workoutFocus: WorkoutFocus): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  if ("indexedDB" in window) {
+    try {
+      await writeSettingToIndexedDb(WORKOUT_FOCUS_SETTINGS_KEY, workoutFocus);
+      return;
+    } catch {
+      // Fall back to localStorage if IndexedDB fails.
+    }
+  }
+
+  window.localStorage.setItem(LOCAL_STORAGE_WORKOUT_FOCUS_KEY, workoutFocus);
 }
 
 export async function loadSavedWorkouts(): Promise<SavedWorkout[]> {
