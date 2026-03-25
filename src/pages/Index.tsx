@@ -296,7 +296,8 @@ const Index = () => {
   }
 
   if (screen === "config") {
-    const totalTime = exercises.reduce((s, e) => s + e.duration, 0) + restSeconds * Math.max(exercises.length - 1, 0);
+    const effectiveDuration = (e: Exercise) => customExerciseDuration ?? e.duration;
+    const totalTime = exercises.reduce((s, e) => s + effectiveDuration(e), 0) + restSeconds * Math.max(exercises.length - 1, 0);
     return (
       <div className="min-h-[100dvh] bg-background">
         <div className="max-w-md mx-auto px-4 py-6">
