@@ -135,7 +135,7 @@ export function WorkoutTimer({
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("exercise");
-  const [timeLeft, setTimeLeft] = useState(exercises[0]?.duration ?? 40);
+  const [timeLeft, setTimeLeft] = useState(getExerciseDuration(exercises[0]) ?? 40);
   const [isRunning, setIsRunning] = useState(false);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [completedWorkoutName, setCompletedWorkoutName] = useState("");
@@ -149,7 +149,7 @@ export function WorkoutTimer({
 
   const currentExercise = exercises[currentIndex];
 
-  const totalDuration = exercises.reduce((sum, e) => sum + e.duration, 0) + restDuration * (exercises.length - 1);
+  const totalDuration = exercises.reduce((sum, e) => sum + getExerciseDuration(e), 0) + restDuration * (exercises.length - 1);
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current) {
