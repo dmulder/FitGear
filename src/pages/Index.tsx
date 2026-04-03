@@ -11,6 +11,7 @@ import {
   type WorkoutFocus,
   type WorkoutMode,
 } from "@/data/exercises";
+import { CLASSIC_WORKOUT, CLASSIC_WORKOUT_ID } from "@/data/classic-workout";
 import {
   loadWorkoutFocus,
   loadSelectedEquipment,
