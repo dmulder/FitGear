@@ -11,6 +11,7 @@ import {
   type WorkoutFocus,
   type WorkoutMode,
 } from "@/data/exercises";
+import { CLASSIC_WORKOUT, CLASSIC_WORKOUT_ID } from "@/data/classic-workout";
 import {
   loadWorkoutFocus,
   loadSelectedEquipment,
@@ -444,11 +445,15 @@ const Index = () => {
               </p>
             </div>
 
-            {savedWorkouts.length > 0 && (
+            {(() => {
+              const allSaved = [...savedWorkouts, CLASSIC_WORKOUT];
+              return (
               <div className="space-y-2">
                 <label className="text-sm font-medium block">Saved workouts</label>
                 <div className="space-y-2 max-h-56 overflow-auto pr-1">
-                  {savedWorkouts.map((savedWorkout) => (
+                  {allSaved.map((savedWorkout) => {
+                    const isPreset = savedWorkout.id === CLASSIC_WORKOUT_ID;
+                    return (
                     <div key={savedWorkout.id} className="flex items-center gap-1 p-1 rounded-lg border bg-card">
                       <button
                         onClick={() => loadSavedWorkout(savedWorkout)}
@@ -463,21 +468,25 @@ const Index = () => {
                             : ""}
                         </p>
                       </button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteSavedWorkout(savedWorkout.id)}
-                        aria-label={`Delete ${savedWorkout.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isPreset && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteSavedWorkout(savedWorkout.id)}
+                          aria-label={`Delete ${savedWorkout.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Preview */}
