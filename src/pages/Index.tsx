@@ -3,6 +3,7 @@ import { EquipmentSelector } from "@/components/EquipmentSelector";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import {
   buildWorkout,
+  getAvailableExercises,
   getAvailableExercisesForMode,
   getExercisesByIds,
   type Difficulty,
@@ -155,8 +156,12 @@ const Index = () => {
     () => getAvailableExercisesForMode(selectedEquipment, difficulty, workoutMode, workoutFocus),
     [selectedEquipment, difficulty, workoutMode, workoutFocus]
   );
-  const availableCount = availableExercises.length;
-  const maxExercises = Math.max(4, Math.min(12, availableCount));
+  const filteredAvailableCount = availableExercises.length;
+  const equipmentAvailableCount = useMemo(
+    () => getAvailableExercises(selectedEquipment).length,
+    [selectedEquipment]
+  );
+  const maxExercises = Math.max(4, Math.min(12, filteredAvailableCount));
 
   useEffect(() => {
     setExerciseCount((prev) => Math.min(prev, maxExercises));
@@ -310,9 +315,16 @@ const Index = () => {
           </button>
 
           <h1 className="text-2xl font-bold mb-1">Your Workout</h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            {availableCount} exercises available with your equipment
-          </p>
+          <div className="mb-6 space-y-1">
+            <p className="text-muted-foreground text-sm">
+              {filteredAvailableCount} exercises match your current settings
+            </p>
+            {filteredAvailableCount !== equipmentAvailableCount && (
+              <p className="text-xs text-muted-foreground">
+                {equipmentAvailableCount} total available from your selected equipment
+              </p>
+            )}
+          </div>
 
           {/* Settings */}
           <div className="space-y-6 mb-8">
@@ -625,7 +637,7 @@ const Index = () => {
             className="w-full"
             size="lg"
           >
-            Continue · {availableCount} exercises available
+            Continue · {equipmentAvailableCount} exercises available
           </Button>
           <p className="text-xs text-center text-muted-foreground mt-2">
             Bodyweight exercises are always included
