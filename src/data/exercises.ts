@@ -428,9 +428,12 @@ function matchesWorkoutFocus(exercise: Exercise, workoutFocus: WorkoutFocus): bo
   return muscleGroup.includes("full body") || category === "cardio" || category === "plyometrics";
 }
 
-export const allExercises: Exercise[] = Object.values(sourceExerciseModules)
-  .map(toExercise)
-  .sort((a, b) => a.name.localeCompare(b.name));
+import { classicExercises } from "./classic-workout";
+
+export const allExercises: Exercise[] = [
+  ...Object.values(sourceExerciseModules).map(toExercise),
+  ...classicExercises,
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export function getExercisesByIds(exerciseIds: string[]): Exercise[] {
   const byId = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
